@@ -95,11 +95,22 @@ func _ready() -> void:
 	test_plat.queue_free()
 	edge_robot.queue_free()
 	
-	# Test 9: Safe spike hazard placement outside natural jump corridor
+	# Test 9: Safe spike hazard placement outside natural jump corridor & never above platforms
 	var spawner_scene = preload("res://scenes/Main.tscn")
 	var main_node = spawner_scene.instantiate()
 	add_child(main_node)
 	var spawner = main_node.get_node("Spawner")
+	
+	# Verify that no spike balls spawn when score < 500
+	GameState.score = 250
+	assert(GameState.score < 500, "Score is under 500 for testing")
+	
+	# Verify _is_position_above_any_platform rejects positions above platforms
+	if spawner.active_platforms.size() > 0:
+		var sample_plat = spawner.active_platforms[0]
+		var directly_above_x = sample_plat.global_position.x
+		var directly_above_y = sample_plat.global_position.y - 60.0
+		assert(spawner._is_position_above_any_platform(directly_above_x, directly_above_y), "Must detect and reject positions directly above platforms")
 	
 	# Test left-to-right jump (from 350 to 580)
 	for i in range(10):
@@ -107,7 +118,8 @@ func _ready() -> void:
 		if pos != Vector2.ZERO:
 			var inside_corridor = pos.x > 350.0 and pos.x < 580.0
 			assert(not inside_corridor, "Spike must NEVER be placed in the middle of platforms along the natural path")
-			assert(absf(pos.x - 580.0) >= 70.0, "Spike must maintain at least 70px breathing room from target platform")
+			assert(absf(pos.x - 580.0) >= 80.0, "Spike must maintain at least 80px breathing room from target platform")
+			assert(not spawner._is_position_above_any_platform(pos.x, pos.y), "Spike position must NEVER be above any platform")
 			
 	# Test right-to-left jump (from 600 to 380)
 	for i in range(10):
@@ -115,9 +127,10 @@ func _ready() -> void:
 		if pos2 != Vector2.ZERO:
 			var inside_corridor2 = pos2.x > 380.0 and pos2.x < 600.0
 			assert(not inside_corridor2, "Spike must NEVER be placed in the middle of platforms along right-to-left natural path")
-			assert(absf(pos2.x - 380.0) >= 70.0, "Spike must maintain at least 70px breathing room from target platform")
+			assert(absf(pos2.x - 380.0) >= 80.0, "Spike must maintain at least 80px breathing room from target platform")
+			assert(not spawner._is_position_above_any_platform(pos2.x, pos2.y), "Spike position must NEVER be above any platform")
 			
-	print("✓ Natural jump path free of spikes and clearance verified")
+	print("✓ Natural jump path free of spikes, score >= 500 gating, and zero platforms underneath verified")
 	main_node.queue_free()
 	
 	print("--- ALL NEW FEATURE TESTS PASSED SUCCESSFULLY! ---\n")

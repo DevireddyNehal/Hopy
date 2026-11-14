@@ -18,6 +18,7 @@ var platform_count: int = 0
 var last_x: float = 270.0
 var active_platforms: Array[StaticBody2D] = []
 var active_spike_balls: Array[Area2D] = []
+var platforms_since_last_spike: int = 10
 
 func _ready() -> void:
 	if not platform_scene:
@@ -120,15 +121,18 @@ func _spawn_next_platform() -> void:
 		last_x = spawn_x
 		
 	# --- Floating Spike Ball Hazard Spawn ---
-	# Never spawn in the middle of the platform gap or on the player's natural trajectory!
-	# Placed on outer flanks or overshoot zones with safe clearance, so clean jumps are safe
-	# but player mistakes (oversteering, panicking, reckless wraps) are penalized.
-	if platform_count > 6 and chosen_type != PlatformScript.Type.THORN and spike_ball_scene:
-		var spike_chance = 0.14 + (diff * 0.12) # 14% -> 26%
-		if randf() < spike_chance:
+	# ONLY spawn after score >= 500 (user request: reduce bomb so it comes after 500)
+	# Spaced out with at least 4 platforms between spawns to reduce bomb density.
+	# NEVER spawn in the middle of platforms or in the vertical airspace above any platform!
+	if GameState.score >= 500 and chosen_type != PlatformScript.Type.THORN and spike_ball_scene:
+		platforms_since_last_spike += 1
+		var diff_after_500 = clampf(float(GameState.score - 500) / 1000.0, 0.0, 1.0)
+		var spike_chance = 0.10 + (diff_after_500 * 0.08) # 10% -> 18%
+		if randf() < spike_chance and platforms_since_last_spike >= 4:
 			var ball_pos = _calculate_safe_hazard_position(last_x, spawn_x, highest_spawned_y, gap, screen_w, min_x, max_x)
 			if ball_pos != Vector2.ZERO:
 				_spawn_spike_ball_at(ball_pos)
+				platforms_since_last_spike = 0
 
 func center_biased_placement(screen_w: float, min_x: float, max_x: float) -> float:
 	var pattern_roll = randf()
@@ -201,68 +205,87 @@ func _spawn_spike_ball_at(pos: Vector2) -> Area2D:
 	active_spike_balls.append(sb)
 	return sb
 
+func _is_position_above_any_platform(cand_x: float, cand_y: float) -> bool:
+	for plat in active_platforms:
+		if not is_instance_valid(plat) or plat.is_broken:
+			continue
+		var plat_x = plat.global_position.x
+		var plat_y = plat.global_position.y
+		
+		# If platform is beneath candidate or level with it (within 280px downward):
+		if cand_y <= plat_y + 40.0 and cand_y >= plat_y - 280.0:
+			if plat.platform_type == PlatformScript.Type.MOVING:
+				# Moving platform sweeps back and forth: protect its entire corridor
+				if cand_x >= plat.left_limit - 50.0 and cand_x <= plat.right_limit + 50.0:
+					return true
+			else:
+				var half_w = 44.0 * absf(plat.scale.x)
+				# 85px clearance ensures zero overlap with platform's vertical column
+				if absf(cand_x - plat_x) < half_w + 45.0:
+					return true
+	return false
+
 func _calculate_safe_hazard_position(from_x: float, to_x: float, top_y: float, gap: float, screen_w: float, min_x: float, max_x: float) -> Vector2:
 	var center = screen_w / 2.0
-	var ball_x: float
-	var ball_y: float
+	var playfield_left = center - 270.0
+	var playfield_right = center + 270.0
 	
 	# Determine horizontal jump direction:
 	var jumping_right = to_x > from_x + 35.0
 	var jumping_left = to_x < from_x - 35.0
 	
-	var placement_roll = randf()
+	# Natural jump corridor to protect completely:
+	var corridor_min = minf(from_x, to_x) - 55.0
+	var corridor_max = maxf(from_x, to_x) + 55.0
+	
+	# Build priority candidate positions
+	var candidates: Array[Vector2] = []
+	var ball_y = top_y + (gap * 0.45)
 	
 	if jumping_right:
-		# Player leaping left-to-right: natural path curves through center.
-		# Middle is strictly preserved. Hazard placed on overshoot flank or far rear flank.
-		if placement_roll < 0.65:
-			# Pattern 1: Overshoot trap past the target platform
-			# If player oversteers past to_x to the right, they hit the spike
-			ball_x = to_x + randf_range(85.0, 115.0)
-			ball_x = clampf(ball_x, to_x + 75.0, max_x + 30.0)
-			ball_y = top_y + randf_range(-10.0, 25.0)
-		else:
-			# Pattern 2: Far left rear flank (behind the takeoff point)
-			ball_x = from_x - randf_range(85.0, 115.0)
-			ball_x = clampf(ball_x, min_x - 30.0, from_x - 75.0)
-			ball_y = top_y + (gap * 0.35)
+		# 1. Outer right overshoot flank (past to_x towards the right wall)
+		var right_flank_x = clampf(to_x + randf_range(95.0, 125.0), to_x + 90.0, playfield_right - 35.0)
+		candidates.append(Vector2(right_flank_x, ball_y))
+		
+		# 2. Far left wall margin (behind takeoff)
+		var left_margin_x = playfield_left + randf_range(30.0, 48.0)
+		candidates.append(Vector2(left_margin_x, ball_y))
+		
+		# 3. Outer right wall margin
+		var right_margin_x = playfield_right - randf_range(30.0, 48.0)
+		candidates.append(Vector2(right_margin_x, ball_y))
 	elif jumping_left:
-		# Player leaping right-to-left: natural path curves through center.
-		if placement_roll < 0.65:
-			# Pattern 1: Overshoot trap past the target platform
-			# If player oversteers past to_x to the left, they hit the spike
-			ball_x = to_x - randf_range(85.0, 115.0)
-			ball_x = clampf(ball_x, min_x - 30.0, to_x - 75.0)
-			ball_y = top_y + randf_range(-10.0, 25.0)
-		else:
-			# Pattern 2: Far right rear flank (behind the takeoff point)
-			ball_x = from_x + randf_range(85.0, 115.0)
-			ball_x = clampf(ball_x, from_x + 75.0, max_x + 30.0)
-			ball_y = top_y + (gap * 0.35)
+		# 1. Outer left overshoot flank (past to_x towards the left wall)
+		var left_flank_x = clampf(to_x - randf_range(95.0, 125.0), playfield_left + 35.0, to_x - 90.0)
+		candidates.append(Vector2(left_flank_x, ball_y))
+		
+		# 2. Far right wall margin (behind takeoff)
+		var right_margin_x = playfield_right - randf_range(30.0, 48.0)
+		candidates.append(Vector2(right_margin_x, ball_y))
+		
+		# 3. Outer left wall margin
+		var left_margin_x = playfield_left + randf_range(30.0, 48.0)
+		candidates.append(Vector2(left_margin_x, ball_y))
 	else:
-		# Vertical corridor jump (from_x and to_x roughly aligned)
-		# Place on the opposite empty half of the screen
+		# Vertical corridor jump
 		if to_x < center:
-			ball_x = randf_range(center + 65.0, max_x)
+			candidates.append(Vector2(playfield_right - 40.0, ball_y))
+			candidates.append(Vector2(randf_range(center + 85.0, max_x), ball_y))
 		else:
-			ball_x = randf_range(min_x, center - 65.0)
-		ball_y = top_y + (gap * 0.3)
-		
-	# Strict validation: Ensure hazard is NEVER inside the natural jump corridor
-	var corridor_min = minf(from_x, to_x) - 50.0
-	var corridor_max = maxf(from_x, to_x) + 50.0
-	if ball_x >= corridor_min and ball_x <= corridor_max:
-		# In case it lands in corridor, shift it to the outer flank
-		if to_x < center:
-			ball_x = max_x - 20.0
-		else:
-			ball_x = min_x + 20.0
+			candidates.append(Vector2(playfield_left + 40.0, ball_y))
+			candidates.append(Vector2(randf_range(min_x, center - 85.0), ball_y))
 			
-	# Ensure safe distance from target platform
-	if absf(ball_x - to_x) < 70.0:
-		return Vector2.ZERO # Skip if too close to platform
+	# Test candidates: MUST NOT be above any platform AND MUST NOT be in natural corridor
+	for cand in candidates:
+		if cand.x >= corridor_min and cand.x <= corridor_max:
+			continue
+		if absf(cand.x - to_x) < 85.0 or absf(cand.x - from_x) < 85.0:
+			continue
+		if _is_position_above_any_platform(cand.x, cand.y):
+			continue
+		return cand
 		
-	return Vector2(ball_x, ball_y)
+	return Vector2.ZERO
 
 func _cleanup_old_platforms(threshold_y: float) -> void:
 	var surviving: Array[StaticBody2D] = []
