@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://scripts/ui/meme_animator.gd" id="2_anim"]
@@ -65,35 +65,35 @@ outline_size = 8
 outline_color = Color(0, 0, 0, 0.9)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_disclaimer"]
-bg_color = Color(0.12, 0.02, 0.04, 0.96)
-border_width_left = 4
-border_width_top = 4
-border_width_right = 4
-border_width_bottom = 4
-border_color = Color(1, 0.15, 0.2, 1)
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-corner_radius_bottom_right = 14
-corner_radius_bottom_left = 14
-shadow_color = Color(1, 0, 0.1, 0.5)
-shadow_size = 20
+bg_color = Color(0.06, 0.07, 0.12, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.96, 0.25, 0.37, 0.85)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 8
 
 [sub_resource type="LabelSettings" id="LabelSettings_disclaimer_title"]
-font_size = 28
-font_color = Color(1, 0.2, 0.2, 1)
-outline_size = 8
+font_size = 15
+font_color = Color(0.96, 0.25, 0.37, 1)
+outline_size = 4
 outline_color = Color(0, 0, 0, 0.9)
 
 [sub_resource type="LabelSettings" id="LabelSettings_disclaimer_sub"]
-font_size = 20
-font_color = Color(1, 0.9, 0.2, 1)
-outline_size = 6
+font_size = 12
+font_color = Color(0.58, 0.64, 0.72, 1)
+outline_size = 2
 outline_color = Color(0, 0, 0, 0.9)
 
 [sub_resource type="LabelSettings" id="LabelSettings_countdown"]
-font_size = 32
+font_size = 17
 font_color = Color(1, 1, 1, 1)
-outline_size = 8
+outline_size = 4
 outline_color = Color(0.8, 0, 0, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_inverted_badge"]
@@ -103,6 +103,18 @@ border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(1, 0.9, 0.2, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drunk_badge"]
+bg_color = Color(0.12, 0.11, 0.29, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.51, 0.55, 0.97, 1)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
@@ -164,9 +176,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -160.0
-offset_top = 90.0
+offset_top = 144.0
 offset_right = 160.0
-offset_bottom = 140.0
+offset_bottom = 184.0
 grow_horizontal = 2
 
 [node name="ComboLabel" type="Label" parent="Control/ComboContainer"]
@@ -247,29 +259,27 @@ vertical_alignment = 1
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
-anchors_preset = 8
+anchors_preset = 5
 anchor_left = 0.5
-anchor_top = 0.5
 anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -260.0
-offset_top = -120.0
-offset_right = 260.0
-offset_bottom = 60.0
+offset_left = -180.0
+offset_top = 80.0
+offset_right = 180.0
+offset_bottom = 138.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_disclaimer")
 
 [node name="Margin" type="MarginContainer" parent="Control/DisclaimerBanner"]
 layout_mode = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 14
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 6
 
 [node name="VBox" type="VBoxContainer" parent="Control/DisclaimerBanner/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 2
 alignment = 1
 
 [node name="DisclaimerTitle" type="Label" parent="Control/DisclaimerBanner/Margin/VBox"]
@@ -292,6 +302,36 @@ layout_mode = 2
 text = "⚡ INVERTING IN: 3 ⚡"
 label_settings = SubResource("LabelSettings_countdown")
 horizontal_alignment = 1
+
+[node name="DrunkIndicator" type="PanelContainer" parent="Control"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -230.0
+offset_top = -102.0
+offset_right = 230.0
+offset_bottom = -64.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_drunk_badge")
+
+[node name="Margin" type="MarginContainer" parent="Control/DrunkIndicator"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 4
+
+[node name="DrunkLabel" type="Label" parent="Control/DrunkIndicator/Margin"]
+layout_mode = 2
+text = "🍺 DRUNK BUFF [+10% JUMP & SWAY] 🥴"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="InvertedIndicator" type="PanelContainer" parent="Control"]
 unique_name_in_owner = true
@@ -318,6 +358,7 @@ theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 4
 
 [node name="InvertedLabel" type="Label" parent="Control/InvertedIndicator/Margin"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "🔄 REVERSED CONTROLS [LEFT ↔ RIGHT] 🔄"
 horizontal_alignment = 1

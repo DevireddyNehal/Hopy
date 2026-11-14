@@ -7,6 +7,7 @@ class_name FollowCamera
 var highest_y: float = 0.0
 var shake_intensity: float = 0.0
 const SHAKE_DECAY: float = 12.0 # Smooth rapid decay
+var drunk_camera_timer: float = 0.0
 
 func _ready() -> void:
 	highest_y = global_position.y
@@ -38,6 +39,13 @@ func _physics_process(delta: float) -> void:
 	else:
 		shake_intensity = 0.0
 		offset = Vector2.ZERO
+
+	# Drunk buff camera tilt sway
+	if GameState.is_drunk:
+		drunk_camera_timer += delta * 2.2
+		rotation = sin(drunk_camera_timer) * 0.024
+	else:
+		rotation = lerp_angle(rotation, 0.0, 8.0 * delta)
 
 	if not target:
 		return

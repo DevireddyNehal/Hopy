@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/camera.gd" id="2_cam"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/Effects.tscn" id="6_effects"]
 [ext_resource type="PackedScene" path="res://scenes/DeathScreen.tscn" id="7_death"]
 [ext_resource type="PackedScene" path="res://scenes/PauseScreen.tscn" id="8_pause"]
+[ext_resource type="Script" path="res://scripts/biome_background.gd" id="9_biome"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -33,6 +34,23 @@ offset_right = 270.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.0588235, 0.0784314, 0.137255, 1)
+
+[node name="BiomeVisuals" type="Control" parent="Background" node_paths=PackedStringArray("camera", "border_left", "border_right", "star_particles")]
+layout_mode = 3
+anchors_preset = 13
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -270.0
+offset_right = 270.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("9_biome")
+camera = NodePath("../../Camera2D")
+border_left = NodePath("../BorderLeft")
+border_right = NodePath("../BorderRight")
+star_particles = NodePath("../StarParticles")
 
 [node name="BorderLeft" type="ColorRect" parent="Background"]
 anchors_preset = 13

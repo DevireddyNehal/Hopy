@@ -24,6 +24,7 @@ var steer_multiplier: float = 1.0
 var is_dead: bool = false
 var is_falling_death: bool = false
 var last_bounce_time: float = -10.0
+var drunk_timer: float = 0.0
 
 func _ready() -> void:
 	# Initialize base scale
@@ -42,10 +43,16 @@ func get_effective_steer_speed() -> float:
 
 func get_effective_bounce_velocity() -> float:
 	var diff = clampf(float(GameState.score) / 1000.0, 0.0, 1.0)
+	var base_v: float
 	if diff <= 0.0:
-		return bounce_velocity
-	var eff_g = get_effective_gravity()
-	return -sqrt(2.0 * eff_g * 297.0)
+		base_v = bounce_velocity
+	else:
+		var eff_g = get_effective_gravity()
+		base_v = -sqrt(2.0 * eff_g * 297.0)
+	# Drunk buff: extra soaring bounce power (+10% upward velocity)
+	if GameState.is_drunk:
+		base_v *= 1.10
+	return base_v
 
 func _physics_process(delta: float) -> void:
 	if is_falling_death:
@@ -67,16 +74,27 @@ func _physics_process(delta: float) -> void:
 	if thruster:
 		thruster.visible = (velocity.y < -120.0)
 	
-	# 2. Horizontal steering via ui_left and ui_right (Inverted at 1000 score!)
+	# 2. Horizontal steering via ui_left and ui_right (Inverted at 500/1000 score!)
 	var active_invert = -1.0 if GameState.are_controls_inverted else 1.0
 	var direction = Input.get_axis("ui_left", "ui_right") * active_invert * steer_multiplier
-	velocity.x = direction * get_effective_steer_speed()
+	var base_steer = direction * get_effective_steer_speed()
 	
-	# Slight tilt animation for steering feedback
+	# Drunk buff mechanics: sinusoidal swaying stagger and hilarious wobble
+	var drunk_sway = 0.0
+	if GameState.is_drunk:
+		drunk_timer += delta * 3.8
+		drunk_sway = sin(drunk_timer) * 165.0
+		
+	velocity.x = base_steer + drunk_sway
+	
+	# Slight tilt animation for steering feedback + drunken wobble
+	var target_rotation = 0.0
 	if direction != 0:
-		sprite.rotation = lerp_angle(sprite.rotation, direction * 0.15, 0.2)
-	else:
-		sprite.rotation = lerp_angle(sprite.rotation, 0.0, 0.2)
+		target_rotation = direction * 0.15
+	if GameState.is_drunk:
+		target_rotation += sin(drunk_timer * 1.8) * 0.18
+		
+	sprite.rotation = lerp_angle(sprite.rotation, target_rotation, 0.2)
 	
 	# Save pre-slide vertical velocity to detect downward impact
 	var was_falling = velocity.y >= 0.0

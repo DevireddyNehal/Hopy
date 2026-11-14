@@ -133,5 +133,62 @@ func _ready() -> void:
 	print("✓ Natural jump path free of spikes, score >= 500 gating, and zero platforms underneath verified")
 	main_node.queue_free()
 	
+	# Test 10: Drunk Buff at 750 score with 3s warning, sound, and Linear craft palette
+	assert(GameState.sfx_drunk != null, "drunk.mp3 must be loaded in GameState")
+	GameState.start_game()
+	assert(not GameState.reached_drunk, "reached_drunk must be false initially")
+	assert(not GameState.is_drunk, "is_drunk must be false initially")
+	assert(not GameState.drunk_warning_active, "drunk_warning_active must be false initially")
+	
+	var drunk_warning_fired = [false]
+	GameState.drunk_warning_started.connect(func(): drunk_warning_fired[0] = true)
+	
+	# Score 750 triggers drunk warning
+	GameState.update_score(755)
+	assert(drunk_warning_fired[0], "drunk_warning_started signal must fire at 750 score")
+	assert(GameState.drunk_warning_active, "drunk_warning_active must be true during 3s warning")
+	assert(GameState.reached_drunk, "reached_drunk must be set to true")
+	
+	# Test Robot Drunk Buff jump boost (+10% bounce velocity)
+	var test_bot = robot_scene.instantiate()
+	add_child(test_bot)
+	GameState.is_drunk = false
+	var standard_bounce = test_bot.get_effective_bounce_velocity()
+	GameState.is_drunk = true
+	var drunk_bounce = test_bot.get_effective_bounce_velocity()
+	assert(absf(drunk_bounce - (standard_bounce * 1.10)) < 0.1, "Drunk buff must provide 1.10x bounce boost")
+	test_bot.queue_free()
+	
+	# Verify craft palette integrity (Linear / Vercel obsidian and twilight)
+	assert(GameState.COLOR_SCHEMES[0]["bg"] == Color("08090c"), "Color scheme 0 must be obsidian void")
+	assert(GameState.COLOR_SCHEMES[3]["bg"] == Color("0f0a1c"), "Color scheme 3 (750-999) must be twilight violet")
+	print("✓ Drunk buff at 750 score, 3s warning, 1.10x bounce boost, and craft obsidian palette verified")
+	
+	# Test 11: Non-intrusive compact HUD warning, 5s inverted duration & Biome Ascent
+	var hud_scene = preload("res://scenes/HUD.tscn")
+	var hud_inst = hud_scene.instantiate()
+	add_child(hud_inst)
+	var banner = hud_inst.get_node("%DisclaimerBanner")
+	assert(banner != null, "DisclaimerBanner must exist")
+	# Must be located near top (offset_top = 80, not in center 480!)
+	assert(banner.offset_top == 80.0, "DisclaimerBanner must be at top (offset_top = 80)")
+	assert(banner.offset_right - banner.offset_left <= 380.0, "DisclaimerBanner width must be compact (<= 380px)")
+	assert(banner.offset_bottom - banner.offset_top <= 65.0, "DisclaimerBanner height must be compact (<= 65px)")
+	print("✓ Disclaimer banner is compact and non-intrusive at the top (80px, 360x58px)")
+	hud_inst.queue_free()
+	
+	# Verify 5-second inverted controls duration constant
+	assert(GameState.INVERT_DURATION == 5.0, "Inverted controls duration must be 5.0 seconds")
+	print("✓ Inverted controls duration set to 5.0 seconds with live countdown")
+	
+	# Verify BiomeVisuals node in Main
+	var main2 = preload("res://scenes/Main.tscn").instantiate()
+	add_child(main2)
+	var biome_node = main2.get_node_or_null("Background/BiomeVisuals")
+	assert(biome_node != null, "Main must contain Background/BiomeVisuals")
+	assert(biome_node is BiomeBackground, "BiomeVisuals must be an instance of BiomeBackground")
+	print("✓ Dynamic Biome Ascent background node verified in Main")
+	main2.queue_free()
+	
 	print("--- ALL NEW FEATURE TESTS PASSED SUCCESSFULLY! ---\n")
 	get_tree().quit(0)

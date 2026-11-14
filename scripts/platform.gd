@@ -89,7 +89,7 @@ func apply_type_style() -> void:
 	elif platform_type == Type.CRUMBLE and crumble_broken_texture:
 		sprite.texture = crumble_broken_texture
 		sprite.scale = Vector2(0.55, 0.55)
-		sprite.modulate = Color(1.0, 0.65, 0.2) # Crumble rust
+		sprite.modulate = Color("d6d3d1") # Frosted fractured slate (zero human skin tones)
 		if spikes:
 			spikes.visible = false
 		return
@@ -101,20 +101,20 @@ func apply_type_style() -> void:
 	if spikes:
 		spikes.visible = (platform_type == Type.THORN)
 		
-	# Tint platform sprite based on type
+	# Tint platform sprite based on type (Crafted Linear / Supabase / Vercel Palette)
 	match platform_type:
 		Type.NORMAL:
-			sprite.modulate = Color(1.0, 1.0, 1.0)
+			sprite.modulate = Color("f8fafc") # Crisp titanium platinum
 		Type.MOVING:
-			sprite.modulate = Color(0.3, 1.0, 0.45) # Toxic neon green
+			sprite.modulate = Color("34d399") # Refined mint emerald (never radioactive slime)
 		Type.CRUMBLE:
-			sprite.modulate = Color(1.0, 0.65, 0.2) # Crumble rust
+			sprite.modulate = Color("d6d3d1") # Fractured volcanic basalt
 		Type.RAINBOW:
-			sprite.modulate = Color(1.0, 0.25, 0.9) # Hot magenta
+			sprite.modulate = Color("818cf8") # Linear craft lavender crystal
 		Type.THORN:
-			sprite.modulate = Color(1.0, 0.2, 0.2) # Crimson hazard
+			sprite.modulate = Color("f43f5e") # Crisp ruby rose hazard
 		Type.MEME:
-			sprite.modulate = Color(1.0, 0.88, 0.1) # Golden yellow
+			sprite.modulate = Color("fbbf24") # Radiant amber topaz
 
 func _on_landing_area_body_entered(body: Node2D) -> void:
 	_try_trigger_landing(body)

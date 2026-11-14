@@ -23,18 +23,28 @@ var is_game_active: bool = false
 
 const BEST_SCORE_PATH: String = "user://best.txt"
 
-# Color schemes: [Background color, Primary accent, Secondary accent]
+# Color schemes: [Background color, Primary accent, Secondary accent] - Crafted Linear/Vercel Obsidian Palette
 const COLOR_SCHEMES = [
-	{"bg": Color("0f1423"), "accent1": Color("ff2a85"), "accent2": Color("00f0ff")}, # 0-249: Cyber Navy
-	{"bg": Color("2b0914"), "accent1": Color("ff5722"), "accent2": Color("ffb300")}, # 250-499: Sunset Blaze
-	{"bg": Color("0b1d16"), "accent1": Color("39ff14"), "accent2": Color("00e5ff")}, # 500-749: Neon Acid
-	{"bg": Color("1a092b"), "accent1": Color("d500f9"), "accent2": Color("ffff00")}, # 750-999: Royal Synth
-	{"bg": Color("050510"), "accent1": Color("ff007f"), "accent2": Color("76ff03")}  # 1000+: Hyperdrive
+	{"bg": Color("08090c"), "accent1": Color("6366f1"), "accent2": Color("38bdf8")}, # 0-249: Obsidian Void (Linear indigo/ice)
+	{"bg": Color("0a0d14"), "accent1": Color("818cf8"), "accent2": Color("2dd4bf")}, # 250-499: Midnight Slate (Craft lavender/teal)
+	{"bg": Color("06120e"), "accent1": Color("10b981"), "accent2": Color("6ee7b7")}, # 500-749: Emerald Horizon (Supabase jade/frost)
+	{"bg": Color("0f0a1c"), "accent1": Color("a855f7"), "accent2": Color("f472b6")}, # 750-999: Twilight Violet (Amethyst craft)
+	{"bg": Color("040407"), "accent1": Color("c084fc"), "accent2": Color("38bdf8")}  # 1000+: Celestial Supernova (Starlight)
 ]
 
 signal meme_triggered(meme_text: String)
 signal controls_inverted_warning_started()
 signal controls_inverted()
+signal controls_restored()
+
+const INVERT_DURATION: float = 5.0
+
+const DRUNK_BUFF_THRESHOLD: int = 750
+var reached_drunk: bool = false
+var is_drunk: bool = false
+var drunk_warning_active: bool = false
+signal drunk_warning_started()
+signal drunk_activated()
 
 var sfx_bounce: AudioStream
 var sfx_rainbow: AudioStream
@@ -43,6 +53,7 @@ var sfx_start: AudioStream
 var sfx_social_credit: AudioStream
 var sfx_cat_laugh: AudioStream
 var sfx_falling_scream: AudioStream
+var sfx_drunk: AudioStream
 var are_controls_inverted: bool = false
 var controls_warning_active: bool = false
 var meme_list: Array = []
@@ -110,6 +121,10 @@ func _load_audio_and_data() -> void:
 	# Mixkit falling male scream 391
 	if ResourceLoader.exists("res://assets/audio/falling_scream.mp3"):
 		sfx_falling_scream = load("res://assets/audio/falling_scream.mp3")
+		
+	# That guy is drunk sound
+	if ResourceLoader.exists("res://assets/audio/drunk.mp3"):
+		sfx_drunk = load("res://assets/audio/drunk.mp3")
 		
 	# Load memes
 	if FileAccess.file_exists("res://data/meme_text.json"):
@@ -206,6 +221,14 @@ func play_falling_scream() -> void:
 	p.pitch_scale = 1.0
 	p.play()
 
+func play_drunk() -> void:
+	if not sfx_drunk:
+		return
+	var p = _get_sfx_player()
+	p.stream = sfx_drunk
+	p.pitch_scale = 1.0
+	p.play()
+
 func trigger_meme() -> void:
 	play_meme()
 	if meme_list.size() > 0:
@@ -292,6 +315,9 @@ func start_game() -> void:
 	reached_invert_controls = false
 	are_controls_inverted = false
 	controls_warning_active = false
+	reached_drunk = false
+	is_drunk = false
+	drunk_warning_active = false
 	is_game_active = true
 	score_changed.emit(score)
 	combo_changed.emit(combo)
@@ -319,6 +345,11 @@ func update_score(new_score: int) -> void:
 			reached_invert_controls = true
 			_trigger_inverted_controls_sequence()
 			
+		# Drunk buff check at 750 score (user request: give drunk buff when score is 750 with 3s warning)
+		if score >= DRUNK_BUFF_THRESHOLD and not reached_drunk:
+			reached_drunk = true
+			_trigger_drunk_sequence()
+			
 		# Check color scheme transitions (every 250 points)
 		var new_scheme = mini(score / 250, COLOR_SCHEMES.size() - 1)
 		if new_scheme != color_scheme_index:
@@ -335,6 +366,26 @@ func _trigger_inverted_controls_sequence() -> void:
 			are_controls_inverted = true
 			controls_warning_active = false
 			controls_inverted.emit()
+			
+			# User request: inverted controls lasts for 5 seconds, then restores
+			var restore_timer = get_tree().create_timer(INVERT_DURATION)
+			restore_timer.timeout.connect(func():
+				if is_game_active and are_controls_inverted:
+					are_controls_inverted = false
+					controls_restored.emit()
+			)
+	)
+
+func _trigger_drunk_sequence() -> void:
+	drunk_warning_active = true
+	play_drunk()
+	drunk_warning_started.emit()
+	var timer = get_tree().create_timer(3.0)
+	timer.timeout.connect(func():
+		if is_game_active:
+			is_drunk = true
+			drunk_warning_active = false
+			drunk_activated.emit()
 	)
 
 func increment_combo() -> void:
