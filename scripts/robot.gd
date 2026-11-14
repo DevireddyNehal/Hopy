@@ -3,15 +3,16 @@ class_name Robot
 
 signal bounced(power: float)
 
-@export var gravity: float = 1400.0
-@export var steer_speed: float = 650.0
-@export var bounce_velocity: float = -900.0
+@export var gravity: float = 1550.0
+@export var steer_speed: float = 760.0
+@export var bounce_velocity: float = -960.0
 
 @onready var sprite: Node2D = $Visuals
 @onready var effect_spawn_point: Marker2D = $EffectSpawnPoint
 @onready var thruster: Polygon2D = $Visuals/ThrusterFlame
 
-const HALF_WIDTH: float = 18.0 # half robot width for clean wrapping
+const BASE_SCALE: Vector2 = Vector2(1.35, 1.35)
+const HALF_WIDTH: float = 25.0 # half robot width for clean wrapping
 
 # Multiplier applied when special platforms (like Rainbow) boost the bounce
 var current_bounce_multiplier: float = 1.0
@@ -21,6 +22,8 @@ var steer_multiplier: float = 1.0
 var is_dead: bool = false
 
 func _ready() -> void:
+	# Initialize base scale
+	sprite.scale = BASE_SCALE
 	# Launch upward on start/restart like classic Doodle Jump!
 	velocity.y = bounce_velocity
 	_play_squash_and_stretch()
@@ -70,9 +73,9 @@ func _physics_process(delta: float) -> void:
 	# Choice: SCREEN WRAPPING. Exiting the left edge wraps the robot to the right edge,
 	# and exiting the right edge wraps the robot to the left edge.
 	var screen_width = get_viewport_rect().size.x
-	if position.x < -HALF_WIDTH:
+	if position.x <= -HALF_WIDTH:
 		position.x = screen_width + HALF_WIDTH
-	elif position.x > screen_width + HALF_WIDTH:
+	elif position.x >= screen_width + HALF_WIDTH:
 		position.x = -HALF_WIDTH
 
 func die() -> void:
@@ -107,6 +110,6 @@ func bounce(multiplier: float = 1.0) -> void:
 
 func _play_squash_and_stretch() -> void:
 	var tween = create_tween()
-	tween.tween_property(sprite, "scale", Vector2(1.3, 0.7), 0.05)
-	tween.tween_property(sprite, "scale", Vector2(0.85, 1.15), 0.1)
-	tween.tween_property(sprite, "scale", Vector2(1.0, 1.0), 0.1)
+	tween.tween_property(sprite, "scale", BASE_SCALE * Vector2(1.25, 0.75), 0.05)
+	tween.tween_property(sprite, "scale", BASE_SCALE * Vector2(0.88, 1.15), 0.1)
+	tween.tween_property(sprite, "scale", BASE_SCALE, 0.1)

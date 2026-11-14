@@ -47,23 +47,38 @@ var bounce_sounds: Array[AudioStream] = []
 
 func _load_audio_and_data() -> void:
 	bounce_sounds.clear()
-	# Sound 0: Michael Jackson "Hee-Hee!"
-	if ResourceLoader.exists("res://assets/audio/rainbow.mp3"):
+	# Sound 0: Crisp boing / jump
+	if ResourceLoader.exists("res://assets/audio/default_bounce.wav"):
+		var s_default = load("res://assets/audio/default_bounce.wav")
+		bounce_sounds.append(s_default)
+		sfx_bounce = s_default
+	elif ResourceLoader.exists("res://assets/audio/bounce.wav"):
+		var s_boing = load("res://assets/audio/bounce.wav")
+		bounce_sounds.append(s_boing)
+		sfx_bounce = s_boing
+		
+	# Sound 1: Michael Jackson "Hee-Hee!"
+	if ResourceLoader.exists("res://assets/audio/hee_hee.mp3"):
+		var s_mj = load("res://assets/audio/hee_hee.mp3")
+		bounce_sounds.append(s_mj)
+		sfx_rainbow = s_mj
+	elif ResourceLoader.exists("res://assets/audio/rainbow.mp3"):
 		var s_mj = load("res://assets/audio/rainbow.mp3")
 		bounce_sounds.append(s_mj)
 		sfx_rainbow = s_mj
-	# Sound 1: Meme "Aaye!"
-	if ResourceLoader.exists("res://assets/audio/meme.mp3"):
+		
+	# Sound 2: Meme "Aaye!"
+	if ResourceLoader.exists("res://assets/audio/aaye.mp3"):
+		var s_aaye = load("res://assets/audio/aaye.mp3")
+		bounce_sounds.append(s_aaye)
+		sfx_meme = s_aaye
+	elif ResourceLoader.exists("res://assets/audio/meme.mp3"):
 		var s_aaye = load("res://assets/audio/meme.mp3")
 		bounce_sounds.append(s_aaye)
 		sfx_meme = s_aaye
-	# Sound 2: Clean Boing!
-	if ResourceLoader.exists("res://assets/audio/bounce.wav"):
-		var s_boing = load("res://assets/audio/bounce.wav")
-		bounce_sounds.append(s_boing)
 		
 	# Fallback default
-	if bounce_sounds.size() > 0:
+	if bounce_sounds.size() > 0 and not sfx_bounce:
 		sfx_bounce = bounce_sounds[0]
 		
 	# Load memes
@@ -107,7 +122,9 @@ func play_bounce() -> void:
 		
 	var p = _get_sfx_player()
 	p.stream = chosen_stream
-	p.pitch_scale = clampf(1.0 + (combo * 0.05), 0.88, 2.3)
+	# Delayed pitch escalation: only increase pitch every 3 combos
+	var pitch_step = int(combo / 3)
+	p.pitch_scale = clampf(1.0 + (pitch_step * 0.07), 0.95, 1.85)
 	p.play()
 
 func play_rainbow() -> void:
@@ -140,22 +157,8 @@ var bgm_stream: AudioStream
 var is_music_started: bool = false
 
 func start_bgm() -> void:
-	if is_music_started and bgm_player and bgm_player.playing:
-		return
-	if not bgm_stream and ResourceLoader.exists("res://assets/audio/bgm.wav"):
-		bgm_stream = load("res://assets/audio/bgm.wav")
-	if bgm_stream:
-		if not bgm_player:
-			bgm_player = AudioStreamPlayer.new()
-			bgm_player.stream = bgm_stream
-			bgm_player.volume_db = -8.0
-			bgm_player.finished.connect(func():
-				if is_music_started and bgm_player:
-					bgm_player.play()
-			)
-			add_child(bgm_player)
-		is_music_started = true
-		bgm_player.play()
+	# BGM removed per user request
+	is_music_started = false
 
 func stop_bgm() -> void:
 	is_music_started = false
@@ -227,7 +230,7 @@ func start_game() -> void:
 	score_changed.emit(score)
 	combo_changed.emit(combo)
 	color_scheme_changed.emit(color_scheme_index)
-	start_bgm()
+	# BGM removed per user request
 	game_started.emit()
 
 func update_score(new_score: int) -> void:

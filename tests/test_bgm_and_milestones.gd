@@ -3,16 +3,10 @@ extends Node2D
 func _ready() -> void:
 	print("\n--- TESTING BGM, MILESTONES & PALETTE SHIFTS ---")
 	
-	# 1. BGM tests
+	# 1. BGM removed verification
 	GameState.start_bgm()
-	assert(GameState.is_music_started, "Music should be flagged as started")
-	assert(GameState.bgm_player != null, "BGM player should be initialized")
-	assert(GameState.bgm_player.playing, "BGM player should be playing")
-	print("✓ BGM playback verified (assets/audio/bgm.wav loop active)")
-	
-	GameState.stop_bgm()
-	assert(not GameState.is_music_started, "Music should be flagged as stopped")
-	print("✓ BGM stop verified")
+	assert(not GameState.is_music_started, "Music should remain disabled per user request")
+	print("✓ BGM disabled verified (user request #2: remove background music)")
 	
 	# 2. Milestones & Palette Shifts
 	var main_scene = load("res://scenes/Main.tscn").instantiate()

@@ -10,15 +10,15 @@ func _ready() -> void:
 	add_child(robot)
 	
 	# 1. Test Initial Properties
-	assert(robot.gravity == 1400.0, "Gravity should be 1400.0")
-	assert(robot.steer_speed == 650.0, "Steer speed should be 650.0")
-	assert(robot.bounce_velocity == -900.0, "Bounce velocity should be -900.0")
-	print("✓ Robot properties verified (Gravity 1400, Speed 650, Bounce -900)")
+	assert(robot.gravity == 1550.0, "Gravity should be 1550.0")
+	assert(robot.steer_speed == 760.0, "Steer speed should be 760.0")
+	assert(robot.bounce_velocity == -960.0, "Bounce velocity should be -960.0")
+	print("✓ Robot properties verified (Gravity 1550, Speed 760, Bounce -960)")
 	
 	# 2. Test Bounce & Combo
 	var initial_combo = GameState.combo
 	robot.bounce()
-	assert(robot.velocity.y == -900.0, "Bounce must set velocity.y to bounce_velocity (-900.0)")
+	assert(robot.velocity.y == -960.0, "Bounce must set velocity.y to bounce_velocity (-960.0)")
 	assert(GameState.combo == initial_combo + 1, "Bounce must increment GameState combo")
 	print("✓ Robot bounce sets vertical velocity and increments combo")
 	

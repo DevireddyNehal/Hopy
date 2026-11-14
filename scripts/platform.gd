@@ -27,6 +27,8 @@ var right_limit: float = 405.0
 var is_broken: bool = false
 var default_texture: Texture2D
 var thorn_texture: Texture2D
+var spring_texture: Texture2D
+var crumble_broken_texture: Texture2D
 
 func _ready() -> void:
 	if sprite:
@@ -35,9 +37,13 @@ func _ready() -> void:
 		thorn_texture = load("res://assets/sprites/red_spike_platform.png")
 	elif ResourceLoader.exists("res://assets/sprites/red_spike_platform.svg"):
 		thorn_texture = load("res://assets/sprites/red_spike_platform.svg")
+	if ResourceLoader.exists("res://assets/sprites/spring_platforms.png"):
+		spring_texture = load("res://assets/sprites/spring_platforms.png")
+	if ResourceLoader.exists("res://assets/sprites/crumble_broken.png"):
+		crumble_broken_texture = load("res://assets/sprites/crumble_broken.png")
 	apply_type_style()
-	left_limit = 75.0
-	right_limit = get_viewport_rect().size.x - 75.0
+	left_limit = 95.0
+	right_limit = get_viewport_rect().size.x - 95.0
 	# Randomize moving platform start direction
 	if randf() > 0.5:
 		move_direction = -1.0
@@ -59,6 +65,13 @@ func apply_type_style() -> void:
 	if platform_type == Type.THORN and thorn_texture:
 		sprite.texture = thorn_texture
 		sprite.scale = Vector2(0.42, 0.42)
+		sprite.modulate = Color.WHITE
+		if spikes:
+			spikes.visible = false
+		return
+	elif platform_type == Type.RAINBOW and spring_texture:
+		sprite.texture = spring_texture
+		sprite.scale = Vector2(0.55, 0.55)
 		sprite.modulate = Color.WHITE
 		if spikes:
 			spikes.visible = false
@@ -126,6 +139,9 @@ func on_robot_landed(robot: CharacterBody2D) -> void:
 
 func _trigger_crumble() -> void:
 	GameState.trigger_effect(&"shatter", global_position)
+	if crumble_broken_texture and sprite:
+		sprite.texture = crumble_broken_texture
+		sprite.scale = Vector2(0.55, 0.55)
 	var tween = create_tween()
 	# Shake then fall
 	tween.tween_property(visuals, "position:x", 6.0, 0.04)

@@ -61,12 +61,12 @@ func _spawn_next_platform() -> void:
 	highest_spawned_y -= gap
 	
 	var screen_w = get_viewport_rect().size.x
-	var min_x = 75.0
-	var max_x = screen_w - 75.0
+	var min_x = 95.0
+	var max_x = screen_w - 95.0
 	
 	# Guaranteed reach rule:
-	# Single, clear platform per tier within +-180px of the last one.
-	var offset_x = randf_range(-180.0, 180.0)
+	# Single, clear platform per tier within +-190px of the last one.
+	var offset_x = randf_range(-190.0, 190.0)
 	if abs(offset_x) < 40.0:
 		offset_x = 60.0 if offset_x >= 0 else -60.0
 		
