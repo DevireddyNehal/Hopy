@@ -40,7 +40,9 @@ func _on_color_scheme_changed(scheme_index: int) -> void:
 	if scheme_index < GameState.COLOR_SCHEMES.size():
 		var scheme = GameState.COLOR_SCHEMES[scheme_index]
 		if background_rect:
-			background_rect.color = scheme["bg"]
+			var tween = create_tween()
+			tween.tween_property(background_rect, "color", scheme["bg"], 1.5)\
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 func _on_game_over() -> void:
 	pass

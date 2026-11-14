@@ -25,8 +25,14 @@ var right_limit: float = 1820.0
 
 # Crumble state
 var is_broken: bool = false
+var default_texture: Texture2D
+var thorn_texture: Texture2D
 
 func _ready() -> void:
+	if sprite:
+		default_texture = sprite.texture
+	if ResourceLoader.exists("res://assets/sprites/red_spike_platform.svg"):
+		thorn_texture = load("res://assets/sprites/red_spike_platform.svg")
 	apply_type_style()
 	right_limit = get_viewport_rect().size.x - 100.0
 	# Randomize moving platform start direction
@@ -44,12 +50,23 @@ func _physics_process(delta: float) -> void:
 			move_direction = -1.0
 
 func apply_type_style() -> void:
-	# Toggle spikes for THORN
-	if spikes:
-		spikes.visible = (platform_type == Type.THORN)
-	
 	if not sprite:
 		return
+		
+	if platform_type == Type.THORN and thorn_texture:
+		sprite.texture = thorn_texture
+		sprite.scale = Vector2(0.42, 0.42)
+		sprite.modulate = Color.WHITE
+		if spikes:
+			spikes.visible = false
+		return
+	elif default_texture:
+		sprite.texture = default_texture
+		sprite.scale = Vector2(0.32, 0.32)
+
+	# Toggle fallback polygon spikes for THORN if no texture
+	if spikes:
+		spikes.visible = (platform_type == Type.THORN)
 		
 	# Tint platform sprite based on type
 	match platform_type:

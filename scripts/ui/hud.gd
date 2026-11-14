@@ -10,11 +10,16 @@ class_name HUD
 @onready var meme_label: Label = $Control/MemeCard/MarginContainer/MemeLabel
 var meme_tween: Tween
 
+@onready var milestone_banner: PanelContainer = %MilestoneBanner
+@onready var milestone_label: Label = %MilestoneLabel
+var milestone_tween: Tween
+
 func _ready() -> void:
 	GameState.score_changed.connect(_on_score_changed)
 	GameState.combo_changed.connect(_on_combo_changed)
 	GameState.best_score_changed.connect(_on_best_score_changed)
 	GameState.meme_triggered.connect(_show_meme_card)
+	GameState.milestone_reached.connect(_show_milestone)
 	
 	# Initial values
 	_on_score_changed(GameState.score)
@@ -22,6 +27,8 @@ func _ready() -> void:
 	_on_best_score_changed(GameState.best_score)
 	if meme_card:
 		meme_card.visible = false
+	if milestone_banner:
+		milestone_banner.visible = false
 
 func _on_score_changed(new_score: int) -> void:
 	if score_label:
@@ -65,3 +72,28 @@ func _show_meme_card(text: String) -> void:
 	meme_tween.tween_interval(1.8)
 	meme_tween.tween_property(meme_card, "modulate:a", 0.0, 0.25)
 	meme_tween.tween_callback(func(): meme_card.visible = false)
+
+func _show_milestone(points: int) -> void:
+	if not milestone_banner or not milestone_label:
+		return
+	if points == 500:
+		milestone_label.text = "🔥 500 PTS REACHED! 🔥"
+	elif points == 1000:
+		milestone_label.text = "👑 1000 PTS LEGEND! 👑"
+	else:
+		milestone_label.text = "★ " + str(points) + " PTS MILESTONE! ★"
+		
+	milestone_banner.visible = true
+	milestone_banner.modulate.a = 1.0
+	milestone_banner.scale = Vector2(0.4, 0.4)
+	milestone_banner.pivot_offset = milestone_banner.size / 2.0
+	
+	if milestone_tween and milestone_tween.is_valid():
+		milestone_tween.kill()
+		
+	milestone_tween = create_tween()
+	milestone_tween.tween_property(milestone_banner, "scale", Vector2(1.15, 1.15), 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	milestone_tween.tween_property(milestone_banner, "scale", Vector2(1.0, 1.0), 0.1)
+	milestone_tween.tween_interval(2.0)
+	milestone_tween.tween_property(milestone_banner, "modulate:a", 0.0, 0.3)
+	milestone_tween.tween_callback(func(): milestone_banner.visible = false)

@@ -122,6 +122,33 @@ func trigger_meme() -> void:
 func trigger_effect(effect_name: StringName, extra_data: Variant = null) -> void:
 	effect_requested.emit(effect_name, extra_data)
 
+var bgm_player: AudioStreamPlayer
+var bgm_stream: AudioStream
+var is_music_started: bool = false
+
+func start_bgm() -> void:
+	if is_music_started and bgm_player and bgm_player.playing:
+		return
+	if not bgm_stream and ResourceLoader.exists("res://assets/audio/bgm.wav"):
+		bgm_stream = load("res://assets/audio/bgm.wav")
+	if bgm_stream:
+		if not bgm_player:
+			bgm_player = AudioStreamPlayer.new()
+			bgm_player.stream = bgm_stream
+			bgm_player.volume_db = -8.0
+			bgm_player.finished.connect(func():
+				if is_music_started and bgm_player:
+					bgm_player.play()
+			)
+			add_child(bgm_player)
+		is_music_started = true
+		bgm_player.play()
+
+func stop_bgm() -> void:
+	is_music_started = false
+	if bgm_player:
+		bgm_player.stop()
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_F11:
@@ -187,6 +214,7 @@ func start_game() -> void:
 	score_changed.emit(score)
 	combo_changed.emit(combo)
 	color_scheme_changed.emit(color_scheme_index)
+	start_bgm()
 	game_started.emit()
 
 func update_score(new_score: int) -> void:
