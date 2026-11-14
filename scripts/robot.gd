@@ -17,10 +17,13 @@ const HALF_WIDTH: float = 16.0 # half robot width for clean wrapping
 # Multiplier applied when special platforms (like Rainbow) boost the bounce
 var current_bounce_multiplier: float = 1.0
 
-# Steering multiplier (can be slowed by Glitch platform)
+# Steering multiplier
 var steer_multiplier: float = 1.0
+var is_dead: bool = false
 
 func _physics_process(delta: float) -> void:
+	if is_dead:
+		return
 	# 1. Apply gravity
 	velocity.y += gravity * delta
 	
@@ -42,7 +45,18 @@ func _physics_process(delta: float) -> void:
 	
 	# 4. Auto-bounce when landing on a floor/platform while falling
 	if is_on_floor() and was_falling:
-		bounce()
+		var handled_by_platform = false
+		for i in get_slide_collision_count():
+			var collision = get_slide_collision(i)
+			var collider = collision.get_collider()
+			# Normal pointing up check (so side brushes don't trigger bounce)
+			if collision.get_normal().y < -0.5:
+				if collider and collider.has_method("on_robot_landed"):
+					collider.on_robot_landed(self)
+					handled_by_platform = true
+					break
+		if not handled_by_platform:
+			bounce(1.0)
 	
 	# 5. Screen boundary handling:
 	# Choice: SCREEN WRAPPING. Exiting the left edge wraps the robot to the right edge,
@@ -52,7 +66,20 @@ func _physics_process(delta: float) -> void:
 	elif position.x > SCREEN_WIDTH + HALF_WIDTH:
 		position.x = -HALF_WIDTH
 
+func die() -> void:
+	if is_dead:
+		return
+	is_dead = true
+	velocity = Vector2.ZERO
+	# Quick death spin & drop
+	var tween = create_tween()
+	tween.tween_property(sprite, "rotation", PI * 2, 0.4)
+	tween.parallel().tween_property(sprite, "scale", Vector2.ZERO, 0.4)
+	GameState.end_game()
+
 func bounce(multiplier: float = 1.0) -> void:
+	if is_dead:
+		return
 	current_bounce_multiplier = multiplier
 	velocity.y = bounce_velocity * current_bounce_multiplier
 	
