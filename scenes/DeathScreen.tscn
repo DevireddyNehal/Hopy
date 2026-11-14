@@ -1,6 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/death_screen.gd" id="1_death"]
+[ext_resource type="Script" path="res://scripts/ui/meme_animator.gd" id="2_anim"]
+[ext_resource type="Texture2D" path="res://assets/sprites/chris_boombox_sheet.png" id="3_chris_tex"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_death"]
 bg_color = Color(0.0627451, 0.0784314, 0.12549, 0.94)
@@ -37,9 +39,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -220.0
-offset_top = -200.0
+offset_top = -250.0
 offset_right = 220.0
-offset_bottom = 200.0
+offset_bottom = 250.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_death")
@@ -47,13 +49,13 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_death")
 [node name="Margin" type="MarginContainer" parent="Panel"]
 layout_mode = 2
 theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 20
+theme_override_constants/margin_top = 18
 theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 20
+theme_override_constants/margin_bottom = 18
 
 [node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 8
 alignment = 1
 
 [node name="GameOverTitle" type="Label" parent="Panel/Margin/VBox"]
@@ -61,7 +63,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.25, 0.45, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
 theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 38
+theme_override_font_sizes/font_size = 36
 text = "GAME OVER"
 horizontal_alignment = 1
 
@@ -78,7 +80,7 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 24
 text = "SCORE: 0"
 horizontal_alignment = 1
 
@@ -86,7 +88,7 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.75, 0.2, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 19
 text = "BEST: 0"
 horizontal_alignment = 1
 
@@ -95,14 +97,24 @@ layout_mode = 2
 
 [node name="RoastLabel" type="Label" parent="Panel/Margin/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(360, 44)
+custom_minimum_size = Vector2(360, 36)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.4, 0.9, 1, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 17
 text = "\"Skill issue.\""
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
+
+[node name="BoomboxMeme" type="Control" parent="Panel/Margin/VBox"]
+custom_minimum_size = Vector2(160, 90)
+layout_mode = 2
+size_flags_horizontal = 4
+script = ExtResource("2_anim")
+sprite_sheet = ExtResource("3_chris_tex")
+hframes = 31
+fps = 24.0
+frame_size = Vector2(160, 90)
 
 [node name="HSeparator2" type="HSeparator" parent="Panel/Margin/VBox"]
 layout_mode = 2
@@ -110,15 +122,15 @@ layout_mode = 2
 [node name="RestartPrompt" type="Label" parent="Panel/Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 15
 text = "Press SPACE to retry"
 horizontal_alignment = 1
 
 [node name="RestartButton" type="Button" parent="Panel/Margin/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(160, 40)
+custom_minimum_size = Vector2(160, 38)
 layout_mode = 2
 size_flags_horizontal = 4
 focus_mode = 0
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 19
 text = "PLAY AGAIN"
