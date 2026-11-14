@@ -68,13 +68,13 @@ signal controls_restored()                     # Fired when controls return to n
 
 const BEST_SCORE_PATH: String = "user://best.txt"
 
-# Color schemes: [Background color, Primary accent, Secondary accent] - Crafted Linear/Vercel Obsidian Palette
+# Color schemes: [Background color, Primary accent, Secondary accent] for biome transitions
 const COLOR_SCHEMES = [
-	{"bg": Color("08090c"), "accent1": Color("6366f1"), "accent2": Color("38bdf8")}, # 0-249: Obsidian Void (Linear indigo/ice)
-	{"bg": Color("0a0d14"), "accent1": Color("818cf8"), "accent2": Color("2dd4bf")}, # 250-499: Midnight Slate (Craft lavender/teal)
-	{"bg": Color("06120e"), "accent1": Color("10b981"), "accent2": Color("6ee7b7")}, # 500-749: Emerald Horizon (Supabase jade/frost)
-	{"bg": Color("0f0a1c"), "accent1": Color("a855f7"), "accent2": Color("f472b6")}, # 750-999: Twilight Violet (Amethyst craft)
-	{"bg": Color("040407"), "accent1": Color("c084fc"), "accent2": Color("38bdf8")}  # 1000+: Celestial Supernova (Starlight)
+	{"bg": Color("08090c"), "accent1": Color("6366f1"), "accent2": Color("38bdf8")}, # 0-249: Obsidian Void
+	{"bg": Color("0a0d14"), "accent1": Color("818cf8"), "accent2": Color("2dd4bf")}, # 250-499: Midnight Slate
+	{"bg": Color("06120e"), "accent1": Color("10b981"), "accent2": Color("6ee7b7")}, # 500-749: Emerald Horizon
+	{"bg": Color("0f0a1c"), "accent1": Color("a855f7"), "accent2": Color("f472b6")}, # 750-999: Twilight Violet
+	{"bg": Color("040407"), "accent1": Color("c084fc"), "accent2": Color("38bdf8")}  # 1000+: Celestial Supernova
 ]
 
 signal meme_triggered(meme_text: String)
@@ -99,7 +99,7 @@ var bounce_sounds: Array[AudioStream] = []
 
 func _load_audio_and_data() -> void:
 	bounce_sounds.clear()
-	# Sound 0: Mac Quack sound (user request: replace default bounce with mac quack)
+	# Sound 0: Primary bounce sound (Mac Quack)
 	if ResourceLoader.exists("res://assets/audio/mac_quack.mp3"):
 		var s_quack = load("res://assets/audio/mac_quack.mp3")
 		bounce_sounds.append(s_quack)
@@ -274,7 +274,7 @@ var bgm_stream: AudioStream
 var is_music_started: bool = false
 
 func start_bgm() -> void:
-	# BGM removed per user request
+	# BGM disabled to prioritize arcade sound effects
 	is_music_started = false
 
 func stop_bgm() -> void:
@@ -354,7 +354,7 @@ func start_game() -> void:
 	score_changed.emit(score)
 	combo_changed.emit(combo)
 	color_scheme_changed.emit(color_scheme_index)
-	# BGM removed per user request
+	# Soundscape remains focused on sound effects
 	game_started.emit()
 
 func update_score(new_score: int) -> void:
@@ -454,7 +454,7 @@ func _trigger_drunk_sequence() -> void:
 		if is_game_active:
 			is_drunk = true
 			drunk_warning_active = false
-			# Audio quote plays ONLY when the drunk effect actually starts (user requirement)
+			# Play audio quote on effect start
 			play_drunk()
 			drunk_activated.emit()
 			

@@ -1,6 +1,7 @@
 # Godot 4+ .gitignore
 .godot/
 build/
+export/
 *.translation
 
 # OS files

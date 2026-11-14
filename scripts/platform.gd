@@ -101,20 +101,20 @@ func apply_type_style() -> void:
 	if spikes:
 		spikes.visible = (platform_type == Type.THORN)
 		
-	# Tint platform sprite based on type (Crafted Linear / Supabase / Vercel Palette)
+	# Tint platform sprite based on type
 	match platform_type:
 		Type.NORMAL:
-			sprite.modulate = Color("f8fafc") # Crisp titanium platinum
+			sprite.modulate = Color("f8fafc") # White / platinum
 		Type.MOVING:
-			sprite.modulate = Color("34d399") # Refined mint emerald (never radioactive slime)
+			sprite.modulate = Color("34d399") # Emerald green
 		Type.CRUMBLE:
-			sprite.modulate = Color("d6d3d1") # Fractured volcanic basalt
+			sprite.modulate = Color("d6d3d1") # Cracked stone gray
 		Type.RAINBOW:
-			sprite.modulate = Color("818cf8") # Linear craft lavender crystal
+			sprite.modulate = Color("818cf8") # Lavender crystal
 		Type.THORN:
-			sprite.modulate = Color("f43f5e") # Crisp ruby rose hazard
+			sprite.modulate = Color("f43f5e") # Crimson hazard red
 		Type.MEME:
-			sprite.modulate = Color("fbbf24") # Radiant amber topaz
+			sprite.modulate = Color("fbbf24") # Golden amber
 
 func _on_landing_area_body_entered(body: Node2D) -> void:
 	_try_trigger_landing(body)
