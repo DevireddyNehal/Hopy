@@ -28,7 +28,7 @@ const SHATTER_COLORS = [Color(0.95, 0.55, 0.25), Color(0.55, 0.36, 1.0)]
 
 var _pool: Array[Particle] = []
 var _active: Array[Particle] = []
-var _character: CanvasItem
+var _character: Node2D = null
 var _base_modulate: Color = Color.WHITE
 var _pulse_tween: Tween
 var _flip_tween: Tween
@@ -90,7 +90,7 @@ func _ready() -> void:
 
 
 ## Bind a visual child such as Sprite2D, never the physics body.
-func bind_character(visual: CanvasItem) -> void:
+func bind_character(visual: Node2D) -> void:
 	if visual == null or not is_instance_valid(visual):
 		return
 	if visual is PhysicsBody2D:
