@@ -42,7 +42,9 @@ func _ready() -> void:
 	if ResourceLoader.exists("res://assets/sprites/crumble_broken.png"):
 		crumble_broken_texture = load("res://assets/sprites/crumble_broken.png")
 	apply_type_style()
-	left_limit = 85.0
+	var center = get_viewport_rect().size.x / 2.0
+	left_limit = center - 270.0 + 85.0
+	right_limit = center + 270.0 - 85.0
 	# Randomize moving platform speed scaled progressively with score
 	var diff = clampf(float(GameState.score) / 1000.0, 0.0, 1.0)
 	move_speed = randf_range(170.0 + (diff * 50.0), 245.0 + (diff * 75.0))

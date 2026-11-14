@@ -23,14 +23,17 @@ func _ready() -> void:
 	print("✓ Robot bounce sets vertical velocity and increments combo")
 	
 	# 3. Test Screen Wrapping
-	var screen_w = robot.get_viewport_rect().size.x
-	robot.position.x = -25.0
-	robot._physics_process(0.016)
-	assert(robot.position.x > screen_w - 50.0, "Exiting left edge must wrap to right edge")
+	var center_x = robot.get_viewport_rect().size.x / 2.0
+	var left_bound = center_x - 270.0
+	var right_bound = center_x + 270.0
 	
-	robot.position.x = screen_w + 30.0
+	robot.position.x = left_bound - 26.0
 	robot._physics_process(0.016)
-	assert(robot.position.x < 50.0, "Exiting right edge must wrap to left edge")
+	assert(robot.position.x >= right_bound, "Exiting left edge must wrap to right edge")
+	
+	robot.position.x = right_bound + 26.0
+	robot._physics_process(0.016)
+	assert(robot.position.x <= left_bound, "Exiting right edge must wrap to left edge")
 	print("✓ Screen wrapping left and right verified")
 	
 	print("--- STEP 1 TESTS PASSED SUCCESSFULLY! ---")

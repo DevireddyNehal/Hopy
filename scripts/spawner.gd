@@ -66,8 +66,9 @@ func _spawn_next_platform() -> void:
 	highest_spawned_y -= gap
 	
 	var screen_w = get_viewport_rect().size.x
-	var min_x = 90.0
-	var max_x = screen_w - 90.0
+	var center = screen_w / 2.0
+	var min_x = center - 270.0 + 90.0
+	var max_x = center + 270.0 - 90.0
 	
 	# --- Strategic Placement Patterns ---
 	var spawn_x: float = center_biased_placement(screen_w, min_x, max_x)
@@ -97,7 +98,6 @@ func _spawn_next_platform() -> void:
 		
 		# 2. Spawn guaranteed safe companion platform on opposite side
 		var safe_x: float
-		var center = screen_w / 2.0
 		if spawn_x < center:
 			safe_x = randf_range(center + 35.0, max_x)
 		else:

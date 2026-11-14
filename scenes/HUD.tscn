@@ -1,9 +1,10 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://scripts/ui/meme_animator.gd" id="2_anim"]
 [ext_resource type="Texture2D" path="res://assets/sprites/chris_boombox_sheet.png" id="3_chris_tex"]
 [ext_resource type="Texture2D" path="res://assets/sprites/dancing_meme_sheet.png" id="4_dance_tex"]
+[ext_resource type="Texture2D" path="res://assets/sprites/subway_surfers_sheet.png" id="5_subway_tex"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_score"]
 font_size = 54
@@ -78,8 +79,11 @@ mouse_filter = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="Control"]
 layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -270.0
+offset_right = 270.0
 offset_bottom = 90.0
 grow_horizontal = 2
 theme_override_constants/margin_left = 32
@@ -195,37 +199,59 @@ label_settings = SubResource("LabelSettings_milestone")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="SideMemeLeft" type="Control" parent="Control"]
+[node name="LeftMemeSideBar" type="VBoxContainer" parent="Control"]
 layout_mode = 1
-anchors_preset = 2
-anchor_top = 1.0
+anchors_preset = 9
 anchor_bottom = 1.0
-offset_left = 6.0
-offset_top = -105.0
-offset_right = 136.0
-offset_bottom = -32.0
-grow_vertical = 0
+offset_left = 30.0
+offset_top = 80.0
+offset_right = 210.0
+offset_bottom = -80.0
+grow_vertical = 2
+theme_override_constants/separation = 45
+alignment = 1
+
+[node name="BoomboxMeme" type="Control" parent="Control/LeftMemeSideBar"]
+custom_minimum_size = Vector2(170, 96)
+layout_mode = 2
+size_flags_horizontal = 4
 script = ExtResource("2_anim")
 sprite_sheet = ExtResource("3_chris_tex")
 hframes = 31
 fps = 24.0
 frame_size = Vector2(160, 90)
 
-[node name="SideMemeRight" type="Control" parent="Control"]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -86.0
-offset_top = -120.0
-offset_right = -8.0
-offset_bottom = -26.0
-grow_horizontal = 0
-grow_vertical = 0
+[node name="DancingMeme" type="Control" parent="Control/LeftMemeSideBar"]
+custom_minimum_size = Vector2(110, 132)
+layout_mode = 2
+size_flags_horizontal = 4
 script = ExtResource("2_anim")
 sprite_sheet = ExtResource("4_dance_tex")
 hframes = 87
 fps = 16.0
 frame_size = Vector2(90, 108)
+
+[node name="RightMemeSideBar" type="VBoxContainer" parent="Control"]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -210.0
+offset_top = 80.0
+offset_right = -30.0
+offset_bottom = -80.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="SubwayMeme" type="Control" parent="Control/RightMemeSideBar"]
+custom_minimum_size = Vector2(120, 214)
+layout_mode = 2
+size_flags_horizontal = 4
+script = ExtResource("2_anim")
+sprite_sheet = ExtResource("5_subway_tex")
+hframes = 40
+fps = 18.0
+frame_size = Vector2(110, 196)

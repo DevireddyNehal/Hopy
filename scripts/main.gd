@@ -3,7 +3,7 @@ extends Node2D
 @onready var robot: CharacterBody2D = $Robot
 @onready var camera: Camera2D = $Camera2D
 @onready var spawner: Node2D = $Spawner
-@onready var background_rect: ColorRect = $Background/ColorRect
+@onready var background_rect: ColorRect = $Background/PlayfieldRect if has_node("Background/PlayfieldRect") else $Background/ColorRect
 @onready var effects: Node2D = $Effects
 
 var can_restart: bool = false

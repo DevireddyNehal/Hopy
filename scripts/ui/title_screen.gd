@@ -43,6 +43,6 @@ func _start_game() -> void:
 	if is_starting:
 		return
 	is_starting = true
-	# Play starting bounce sound as audio unlock!
-	GameState.play_bounce()
+	# Play starting meme audio unlock (Chaliye shuru karte hain!)
+	GameState.play_start_game()
 	get_tree().change_scene_to_file("res://scenes/Main.tscn")

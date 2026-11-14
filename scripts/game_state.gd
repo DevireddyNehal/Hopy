@@ -35,6 +35,7 @@ signal meme_triggered(meme_text: String)
 var sfx_bounce: AudioStream
 var sfx_rainbow: AudioStream
 var sfx_meme: AudioStream
+var sfx_start: AudioStream
 var meme_list: Array = []
 
 func _ready() -> void:
@@ -80,6 +81,10 @@ func _load_audio_and_data() -> void:
 	# Fallback default
 	if bounce_sounds.size() > 0 and not sfx_bounce:
 		sfx_bounce = bounce_sounds[0]
+		
+	# Start game sound (Chaliye shuru karte hain!)
+	if ResourceLoader.exists("res://assets/audio/start_game.mp3"):
+		sfx_start = load("res://assets/audio/start_game.mp3")
 		
 	# Load memes
 	if FileAccess.file_exists("res://data/meme_text.json"):
@@ -142,6 +147,15 @@ func play_meme() -> void:
 	p.stream = sfx_meme
 	p.pitch_scale = 1.0
 	p.play()
+
+func play_start_game() -> void:
+	if sfx_start:
+		var p = _get_sfx_player()
+		p.stream = sfx_start
+		p.pitch_scale = 1.0
+		p.play()
+	else:
+		play_bounce()
 
 func trigger_meme() -> void:
 	play_meme()

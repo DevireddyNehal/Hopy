@@ -29,7 +29,7 @@ window/size/viewport_height=850
 window/size/mode="windowed"
 window/size/initial_position_type=2
 window/stretch/mode="canvas_items"
-window/stretch/aspect="keep"
+window/stretch/aspect="expand"
 
 [rendering]
 

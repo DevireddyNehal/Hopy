@@ -85,13 +85,14 @@ func _physics_process(delta: float) -> void:
 			bounce(1.0)
 	
 	# 5. Screen boundary handling:
-	# Choice: SCREEN WRAPPING. Exiting the left edge wraps the robot to the right edge,
-	# and exiting the right edge wraps the robot to the left edge.
-	var screen_width = get_viewport_rect().size.x
-	if position.x <= -HALF_WIDTH:
-		position.x = screen_width + HALF_WIDTH
-	elif position.x >= screen_width + HALF_WIDTH:
-		position.x = -HALF_WIDTH
+	# Screen wrapping at the vertical playfield tower boundaries (540px wide centered on screen):
+	var center_x = get_viewport_rect().size.x / 2.0
+	var left_bound = center_x - 270.0
+	var right_bound = center_x + 270.0
+	if position.x <= left_bound - HALF_WIDTH:
+		position.x = right_bound + HALF_WIDTH
+	elif position.x >= right_bound + HALF_WIDTH:
+		position.x = left_bound - HALF_WIDTH
 
 func die() -> void:
 	if is_dead:
