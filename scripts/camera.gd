@@ -51,9 +51,11 @@ func _physics_process(delta: float) -> void:
 			
 	# 3. Falling below screen death condition:
 	var half_h = get_viewport_rect().size.y / 2.0
-	var screen_bottom = global_position.y + half_h + 60.0
-	if target.global_position.y > screen_bottom:
-		if target.has_method("die"):
+	var screen_bottom = global_position.y + half_h
+	if target and target.global_position.y > screen_bottom + 15.0:
+		if target.has_method("start_falling_abyss_death"):
+			target.start_falling_abyss_death()
+		elif target.has_method("die"):
 			target.die()
 		else:
 			GameState.end_game()

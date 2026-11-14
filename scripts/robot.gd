@@ -6,6 +6,8 @@ signal bounced(power: float)
 @export var gravity: float = 1550.0
 @export var steer_speed: float = 760.0
 @export var bounce_velocity: float = -960.0
+@export var camera: Camera2D
+@export var spawner: Node2D
 
 @onready var sprite: Node2D = $Visuals
 @onready var effect_spawn_point: Marker2D = $EffectSpawnPoint
@@ -20,6 +22,7 @@ var current_bounce_multiplier: float = 1.0
 # Steering multiplier
 var steer_multiplier: float = 1.0
 var is_dead: bool = false
+var is_falling_death: bool = false
 
 func _ready() -> void:
 	# Initialize base scale
@@ -44,8 +47,18 @@ func get_effective_bounce_velocity() -> float:
 	return -sqrt(2.0 * eff_g * 297.0)
 
 func _physics_process(delta: float) -> void:
+	if is_falling_death:
+		# Custom plummeting physics during extended abyss fall
+		velocity.y += (gravity * 1.4) * delta
+		position.y += velocity.y * delta
+		position.x += velocity.x * delta
+		if sprite:
+			sprite.rotation += 15.0 * delta
+		return
+		
 	if is_dead:
 		return
+		
 	# 1. Apply progressive gravity
 	velocity.y += get_effective_gravity() * delta
 	
@@ -53,9 +66,10 @@ func _physics_process(delta: float) -> void:
 	if thruster:
 		thruster.visible = (velocity.y < -120.0)
 	
-	# 2. Horizontal steering via ui_left and ui_right (Left/Right arrows and A/D)
-	var direction = Input.get_axis("ui_left", "ui_right")
-	velocity.x = direction * get_effective_steer_speed() * steer_multiplier
+	# 2. Horizontal steering via ui_left and ui_right (Inverted at 1000 score!)
+	var active_invert = -1.0 if GameState.are_controls_inverted else 1.0
+	var direction = Input.get_axis("ui_left", "ui_right") * active_invert * steer_multiplier
+	velocity.x = direction * get_effective_steer_speed()
 	
 	# Slight tilt animation for steering feedback
 	if direction != 0:
@@ -69,23 +83,18 @@ func _physics_process(delta: float) -> void:
 	# 3. Move with physics
 	move_and_slide()
 	
-	# 4. Auto-bounce when landing on a floor/platform while falling
+	# 4. Auto-bounce ONLY when landing on an actual platform while falling
 	if is_on_floor() and was_falling:
-		var handled_by_platform = false
 		for i in get_slide_collision_count():
 			var collision = get_slide_collision(i)
 			var collider = collision.get_collider()
-			# Normal pointing up check (so side brushes don't trigger bounce)
 			if collision.get_normal().y < -0.5:
 				if collider and collider.has_method("on_robot_landed"):
 					collider.on_robot_landed(self)
-					handled_by_platform = true
 					break
-		if not handled_by_platform:
-			bounce(1.0)
+		# Fixed: NEVER bounce on floor or arbitrary bodies!
 	
-	# 5. Screen boundary handling:
-	# Screen wrapping at the vertical playfield tower boundaries (540px wide centered on screen):
+	# 5. Screen boundary handling (wrapping):
 	var center_x = get_viewport_rect().size.x / 2.0
 	var left_bound = center_x - 270.0
 	var right_bound = center_x + 270.0
@@ -93,12 +102,61 @@ func _physics_process(delta: float) -> void:
 		position.x = right_bound + HALF_WIDTH
 	elif position.x >= right_bound + HALF_WIDTH:
 		position.x = left_bound - HALF_WIDTH
+		
+	# 6. Abyss fall check: if falling and no platforms underneath, trigger extended fall death!
+	if was_falling and not is_dead:
+		var half_h = get_viewport_rect().size.y / 2.0
+		var cam_y = camera.global_position.y if camera else global_position.y
+		var screen_bottom = cam_y + half_h
+		
+		# If robot has fallen past visible screen or has no platforms beneath
+		if global_position.y > screen_bottom - 20.0:
+			var has_platforms = true
+			if spawner and spawner.has_method("has_platforms_below"):
+				has_platforms = spawner.has_platforms_below(global_position.y)
+			else:
+				has_platforms = false
+				
+			if not has_platforms or global_position.y > screen_bottom + 15.0:
+				start_falling_abyss_death()
+
+func start_falling_abyss_death() -> void:
+	if is_dead:
+		return
+	is_dead = true
+	is_falling_death = true
+	
+	# Disable collisions immediately so it can NEVER hit anything or bounce
+	collision_layer = 0
+	collision_mask = 0
+	
+	# Play the cat-laugh meme sound!
+	GameState.play_cat_laugh()
+	
+	# Extended falling animation: flailing, spinning, shrinking into the void
+	velocity.x = randf_range(-60.0, 60.0)
+	velocity.y = maxf(velocity.y, 450.0)
+	
+	var tween = create_tween()
+	# Shrink and plunge deep into the dark void over 1.7 seconds
+	tween.tween_property(sprite, "scale", Vector2(0.08, 0.08), 1.6)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.parallel().tween_property(sprite, "modulate", Color(0.1, 0.1, 0.2, 0.2), 1.6)
+	
+	# End game and show death roast after the extended fall
+	var end_timer = get_tree().create_timer(1.75)
+	end_timer.timeout.connect(func():
+		GameState.trigger_effect(&"shake", 8.0)
+		GameState.end_game()
+	)
 
 func die() -> void:
 	if is_dead:
 		return
 	is_dead = true
 	velocity = Vector2.ZERO
+	collision_layer = 0
+	collision_mask = 0
 	# Quick death spin & drop + heavy screen shake
 	var tween = create_tween()
 	tween.tween_property(sprite, "rotation", PI * 2, 0.4)

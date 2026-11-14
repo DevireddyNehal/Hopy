@@ -31,11 +31,17 @@ const COLOR_SCHEMES = [
 ]
 
 signal meme_triggered(meme_text: String)
+signal controls_inverted_warning_started()
+signal controls_inverted()
 
 var sfx_bounce: AudioStream
 var sfx_rainbow: AudioStream
 var sfx_meme: AudioStream
 var sfx_start: AudioStream
+var sfx_social_credit: AudioStream
+var sfx_cat_laugh: AudioStream
+var are_controls_inverted: bool = false
+var controls_warning_active: bool = false
 var meme_list: Array = []
 
 func _ready() -> void:
@@ -85,6 +91,14 @@ func _load_audio_and_data() -> void:
 	# Start game sound (Chaliye shuru karte hain!)
 	if ResourceLoader.exists("res://assets/audio/start_game.mp3"):
 		sfx_start = load("res://assets/audio/start_game.mp3")
+		
+	# Social credit siren sound (-999 Social Credit)
+	if ResourceLoader.exists("res://assets/audio/social_credit_siren.mp3"):
+		sfx_social_credit = load("res://assets/audio/social_credit_siren.mp3")
+		
+	# Cat laugh meme sound
+	if ResourceLoader.exists("res://assets/audio/cat_laugh.mp3"):
+		sfx_cat_laugh = load("res://assets/audio/cat_laugh.mp3")
 		
 	# Load memes
 	if FileAccess.file_exists("res://data/meme_text.json"):
@@ -156,6 +170,22 @@ func play_start_game() -> void:
 		p.play()
 	else:
 		play_bounce()
+
+func play_social_credit() -> void:
+	if not sfx_social_credit:
+		return
+	var p = _get_sfx_player()
+	p.stream = sfx_social_credit
+	p.pitch_scale = 1.0
+	p.play()
+
+func play_cat_laugh() -> void:
+	if not sfx_cat_laugh:
+		return
+	var p = _get_sfx_player()
+	p.stream = sfx_cat_laugh
+	p.pitch_scale = 1.0
+	p.play()
 
 func trigger_meme() -> void:
 	play_meme()
@@ -240,6 +270,8 @@ func start_game() -> void:
 	color_scheme_index = 0
 	reached_500 = false
 	reached_1000 = false
+	are_controls_inverted = false
+	controls_warning_active = false
 	is_game_active = true
 	score_changed.emit(score)
 	combo_changed.emit(combo)
@@ -261,12 +293,25 @@ func update_score(new_score: int) -> void:
 		if score >= 1000 and not reached_1000:
 			reached_1000 = true
 			milestone_reached.emit(1000)
+			_trigger_inverted_controls_sequence()
 			
 		# Check color scheme transitions (every 250 points)
 		var new_scheme = mini(score / 250, COLOR_SCHEMES.size() - 1)
 		if new_scheme != color_scheme_index:
 			color_scheme_index = new_scheme
 			color_scheme_changed.emit(color_scheme_index)
+
+func _trigger_inverted_controls_sequence() -> void:
+	controls_warning_active = true
+	play_social_credit()
+	controls_inverted_warning_started.emit()
+	var timer = get_tree().create_timer(3.0)
+	timer.timeout.connect(func():
+		if is_game_active:
+			are_controls_inverted = true
+			controls_warning_active = false
+			controls_inverted.emit()
+	)
 
 func increment_combo() -> void:
 	combo += 1

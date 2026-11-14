@@ -14,6 +14,10 @@ var meme_tween: Tween
 @onready var milestone_label: Label = %MilestoneLabel
 var milestone_tween: Tween
 
+@onready var disclaimer_banner: PanelContainer = %DisclaimerBanner if has_node("%DisclaimerBanner") else null
+@onready var countdown_label: Label = %CountdownLabel if has_node("%CountdownLabel") else null
+@onready var inverted_indicator: PanelContainer = %InvertedIndicator if has_node("%InvertedIndicator") else null
+
 @onready var left_sidebar: Control = $Control/LeftMemeSideBar if has_node("Control/LeftMemeSideBar") else null
 @onready var right_sidebar: Control = $Control/RightMemeSideBar if has_node("Control/RightMemeSideBar") else null
 var _last_screen_size: Vector2 = Vector2.ZERO
@@ -24,6 +28,8 @@ func _ready() -> void:
 	GameState.best_score_changed.connect(_on_best_score_changed)
 	GameState.meme_triggered.connect(_show_meme_card)
 	GameState.milestone_reached.connect(_show_milestone)
+	GameState.controls_inverted_warning_started.connect(_on_controls_warning_started)
+	GameState.controls_inverted.connect(_on_controls_inverted)
 	
 	# Initial values
 	_on_score_changed(GameState.score)
@@ -33,6 +39,10 @@ func _ready() -> void:
 		meme_card.visible = false
 	if milestone_banner:
 		milestone_banner.visible = false
+	if disclaimer_banner:
+		disclaimer_banner.visible = false
+	if inverted_indicator:
+		inverted_indicator.visible = false
 		
 	get_tree().root.size_changed.connect(_update_sidebar_layout)
 	_update_sidebar_layout.call_deferred()
@@ -164,3 +174,48 @@ func _update_sidebar_layout() -> void:
 		target_x = clampf(target_x, playfield_right + 20.0, screen_w - right_w - 15.0)
 		var target_y = (screen_h - right_h) / 2.0
 		right_sidebar.position = Vector2(target_x, target_y)
+
+func _on_controls_warning_started() -> void:
+	if not disclaimer_banner or not countdown_label:
+		return
+	disclaimer_banner.visible = true
+	disclaimer_banner.modulate.a = 1.0
+	disclaimer_banner.scale = Vector2(0.5, 0.5)
+	disclaimer_banner.pivot_offset = disclaimer_banner.size / 2.0
+	var tween = create_tween()
+	tween.tween_property(disclaimer_banner, "scale", Vector2(1.1, 1.1), 0.2)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(disclaimer_banner, "scale", Vector2(1.0, 1.0), 0.1)
+	
+	countdown_label.text = "⚡ INVERTING IN: 3 ⚡"
+	var t1 = get_tree().create_timer(1.0)
+	t1.timeout.connect(func():
+		if is_instance_valid(countdown_label):
+			countdown_label.text = "⚡ INVERTING IN: 2 ⚡"
+			GameState.trigger_effect(&"shake", 4.0)
+	)
+	var t2 = get_tree().create_timer(2.0)
+	t2.timeout.connect(func():
+		if is_instance_valid(countdown_label):
+			countdown_label.text = "⚡ INVERTING IN: 1 ⚡"
+			GameState.trigger_effect(&"shake", 6.0)
+	)
+	var t3 = get_tree().create_timer(3.0)
+	t3.timeout.connect(func():
+		if is_instance_valid(countdown_label):
+			countdown_label.text = "💥 CONTROLS INVERTED! 💥"
+			GameState.trigger_effect(&"shake", 10.0)
+			GameState.trigger_effect(&"screen_flash", Color(1.0, 0.1, 0.1, 0.5))
+		if is_instance_valid(disclaimer_banner):
+			var fade = create_tween()
+			fade.tween_interval(0.8)
+			fade.tween_property(disclaimer_banner, "modulate:a", 0.0, 0.3)
+			fade.tween_callback(func(): disclaimer_banner.visible = false)
+	)
+
+func _on_controls_inverted() -> void:
+	if inverted_indicator:
+		inverted_indicator.visible = true
+		var p_tween = create_tween().set_loops()
+		p_tween.tween_property(inverted_indicator, "modulate:a", 0.45, 0.5)
+		p_tween.tween_property(inverted_indicator, "modulate:a", 1.0, 0.5)

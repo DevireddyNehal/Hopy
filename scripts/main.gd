@@ -16,7 +16,12 @@ func _ready() -> void:
 	
 	_on_color_scheme_changed(GameState.color_scheme_index)
 	spawner.camera = camera
+	robot.camera = camera
+	robot.spawner = spawner
 	camera.target = robot
+	
+	# Start game audio: "Chaliye shuru karte hain!"
+	GameState.play_start_game()
 	
 	if effects and effects.has_method("bind_character") and robot.has_node("Visuals"):
 		effects.bind_character(robot.get_node("Visuals"))

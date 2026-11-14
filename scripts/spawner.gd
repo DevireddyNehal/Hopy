@@ -4,6 +4,7 @@ class_name PlatformSpawner
 const PlatformScript = preload("res://scripts/platform.gd")
 
 @export var platform_scene: PackedScene
+@export var spike_ball_scene: PackedScene
 @export var camera: Camera2D
 
 # Vertical gap limits: 125px - 175px (apex jump reach is 297px)
@@ -16,10 +17,13 @@ var highest_spawned_y: float = 520.0
 var platform_count: int = 0
 var last_x: float = 270.0
 var active_platforms: Array[StaticBody2D] = []
+var active_spike_balls: Array[Area2D] = []
 
 func _ready() -> void:
 	if not platform_scene:
 		platform_scene = preload("res://scenes/Platform.tscn")
+	if not spike_ball_scene and ResourceLoader.exists("res://scenes/SpikeBall.tscn"):
+		spike_ball_scene = load("res://scenes/SpikeBall.tscn")
 	var screen_w = get_viewport_rect().size.x
 	last_x = screen_w / 2.0
 	_spawn_initial_platforms()
@@ -111,6 +115,18 @@ func _spawn_next_platform() -> void:
 	else:
 		_spawn_platform_at(Vector2(spawn_x, highest_spawned_y), chosen_type, plat_scale)
 		last_x = spawn_x
+		
+	# --- Floating Spike Ball Hazard Spawn ---
+	if platform_count > 6 and chosen_type != PlatformScript.Type.THORN and spike_ball_scene:
+		var spike_chance = 0.14 + (diff * 0.12) # 14% -> 26%
+		if randf() < spike_chance:
+			var ball_y = highest_spawned_y + (gap * 0.5)
+			var ball_x: float
+			if last_x < center:
+				ball_x = randf_range(center + 30.0, max_x - 30.0)
+			else:
+				ball_x = randf_range(min_x + 30.0, center - 30.0)
+			_spawn_spike_ball_at(Vector2(ball_x, ball_y))
 
 func center_biased_placement(screen_w: float, min_x: float, max_x: float) -> float:
 	var pattern_roll = randf()
@@ -176,12 +192,41 @@ func _spawn_platform_at(pos: Vector2, type: int, custom_scale: Vector2 = Vector2
 	active_platforms.append(plat)
 	return plat
 
+func _spawn_spike_ball_at(pos: Vector2) -> Area2D:
+	var sb = spike_ball_scene.instantiate()
+	sb.global_position = pos
+	add_child(sb)
+	active_spike_balls.append(sb)
+	return sb
+
 func _cleanup_old_platforms(threshold_y: float) -> void:
 	var surviving: Array[StaticBody2D] = []
 	for plat in active_platforms:
 		if is_instance_valid(plat):
+			# If platform falls below visible screen, disable its collision shape
+			# so robot can NEVER hit or bounce off it when falling!
+			if plat.global_position.y > threshold_y - DESPAWN_OFFSET:
+				if plat.has_node("CollisionShape2D"):
+					plat.get_node("CollisionShape2D").set_deferred("disabled", true)
+				
 			if plat.global_position.y > threshold_y:
 				plat.queue_free()
 			else:
 				surviving.append(plat)
 	active_platforms = surviving
+	
+	var surviving_balls: Array[Area2D] = []
+	for ball in active_spike_balls:
+		if is_instance_valid(ball):
+			if ball.global_position.y > threshold_y:
+				ball.queue_free()
+			else:
+				surviving_balls.append(ball)
+	active_spike_balls = surviving_balls
+
+func has_platforms_below(check_y: float) -> bool:
+	for plat in active_platforms:
+		if is_instance_valid(plat) and not plat.is_broken:
+			if plat.global_position.y > check_y:
+				return true
+	return false

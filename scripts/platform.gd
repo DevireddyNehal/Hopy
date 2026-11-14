@@ -79,6 +79,13 @@ func apply_type_style() -> void:
 		if spikes:
 			spikes.visible = false
 		return
+	elif platform_type == Type.CRUMBLE and crumble_broken_texture:
+		sprite.texture = crumble_broken_texture
+		sprite.scale = Vector2(0.55, 0.55)
+		sprite.modulate = Color(1.0, 0.65, 0.2) # Crumble rust
+		if spikes:
+			spikes.visible = false
+		return
 	elif default_texture:
 		sprite.texture = default_texture
 		sprite.scale = Vector2(0.185, 0.22)
