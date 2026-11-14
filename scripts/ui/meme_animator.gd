@@ -54,5 +54,8 @@ func _update_frame(idx: int) -> void:
 
 func _draw() -> void:
 	if _atlas:
-		var draw_pos = (size - frame_size) / 2.0
-		draw_texture(_atlas, draw_pos)
+		if size.x > 0 and size.y > 0 and size != frame_size:
+			draw_texture_rect(_atlas, Rect2(Vector2.ZERO, size), false)
+		else:
+			var draw_pos = (size - frame_size) / 2.0
+			draw_texture(_atlas, draw_pos)
