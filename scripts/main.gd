@@ -65,9 +65,9 @@ func _update_star_particles_layout() -> void:
 		star_particles_right.amount = count
 
 func _physics_process(_delta: float) -> void:
-	# Height-based score calculation
+	# Height-based score calculation (1 point per 10px climbed)
 	if GameState.is_game_active and is_instance_valid(robot):
-		var current_height = maxf(0.0, (start_y - robot.global_position.y) / 8.0)
+		var current_height = maxf(0.0, (start_y - robot.global_position.y) / 10.0)
 		GameState.update_score(int(current_height))
 		
 func _on_color_scheme_changed(scheme_index: int) -> void:
