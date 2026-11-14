@@ -16,6 +16,14 @@ func _ready() -> void:
 	_on_color_scheme_changed(GameState.color_scheme_index)
 	spawner.camera = camera
 	camera.target = robot
+	
+	# Dynamically center robot & camera for any resolution (1080p, 1440p, fullscreen)
+	var screen_size = get_viewport_rect().size
+	var center_x = screen_size.x / 2.0
+	var center_y = screen_size.y / 2.0
+	
+	camera.global_position = Vector2(center_x, center_y)
+	robot.global_position = Vector2(center_x, center_y + 120.0)
 	start_y = robot.global_position.y
 
 func _physics_process(_delta: float) -> void:

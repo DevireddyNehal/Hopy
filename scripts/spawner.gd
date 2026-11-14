@@ -7,21 +7,18 @@ const PlatformScript = preload("res://scripts/platform.gd")
 @export var camera: Camera2D
 
 # Vertical gap limits: comfortable, dense, reachable climb
-const MIN_GAP_Y: float = 80.0
-const MAX_GAP_Y: float = 135.0
-const BUFFER_AHEAD: float = 1200.0 # Keep spawning 1200px above camera
-const DESPAWN_OFFSET: float = 600.0 # Remove platforms 600px below camera
+const MIN_GAP_Y: float = 75.0
+const MAX_GAP_Y: float = 125.0
+const BUFFER_AHEAD: float = 1400.0 # Keep spawning well above camera
+const DESPAWN_OFFSET: float = 700.0 # Remove platforms below camera
 
-var highest_spawned_y: float = 520.0
+var highest_spawned_y: float = 700.0
 var platform_count: int = 0
-var last_spawned_x: float = 960.0
 var active_platforms: Array[StaticBody2D] = []
 
 func _ready() -> void:
 	if not platform_scene:
 		platform_scene = preload("res://scenes/Platform.tscn")
-	var screen_w = get_viewport_rect().size.x
-	last_spawned_x = screen_w / 2.0
 	# Initial seed platforms
 	_spawn_initial_platforms()
 
@@ -40,13 +37,17 @@ func _physics_process(_delta: float) -> void:
 	_cleanup_old_platforms(camera_bottom)
 
 func _spawn_initial_platforms() -> void:
-	var screen_w = get_viewport_rect().size.x
-	var center_x = screen_w / 2.0
-	# First safe platform directly under the player start
-	_spawn_platform_at(Vector2(center_x, 520), PlatformScript.Type.NORMAL)
+	var screen_size = get_viewport_rect().size
+	var center_x = screen_size.x / 2.0
+	var center_y = screen_size.y / 2.0
 	
-	# Spawn a trail of initial platforms reaching up
-	for i in range(16):
+	highest_spawned_y = center_y + 200.0
+	
+	# 1. Guaranteed first safe landing platform directly underneath the robot
+	_spawn_platform_at(Vector2(center_x, highest_spawned_y), PlatformScript.Type.NORMAL)
+	
+	# 2. Pre-spawn a dense trail of platforms climbing upward across the screen
+	for i in range(25):
 		_spawn_next_platform()
 
 func _spawn_next_platform() -> void:
@@ -54,20 +55,29 @@ func _spawn_next_platform() -> void:
 	highest_spawned_y -= gap
 	
 	var screen_w = get_viewport_rect().size.x
-	var min_x = 80.0
-	var max_x = screen_w - 80.0
 	
-	# Reachable horizontal range rule:
-	# With steer_speed = 520, reach is >500px, so +-360px guarantees it is always reachable!
-	var offset_x = randf_range(-360.0, 360.0)
-	var spawn_x = clampf(last_spawned_x + offset_x, min_x, max_x)
-	last_spawned_x = spawn_x
+	# Platform 1: Distributed across the screen
+	var spawn_x = randf_range(100.0, screen_w - 100.0)
+	_spawn_platform_at(Vector2(spawn_x, highest_spawned_y), _pick_type())
 	
+	# Platform 2 (Widescreen coverage):
+	# 60% chance to spawn an alternate platform on the opposite side of the screen
+	# so the 1920 widescreen is never empty on either flank!
+	if randf() < 0.65:
+		var second_x: float
+		if spawn_x < screen_w / 2.0:
+			second_x = randf_range(screen_w / 2.0 + 80.0, screen_w - 100.0)
+		else:
+			second_x = randf_range(100.0, screen_w / 2.0 - 80.0)
+		var jitter_y = highest_spawned_y + randf_range(-15.0, 15.0)
+		_spawn_platform_at(Vector2(second_x, jitter_y), _pick_type())
+
+func _pick_type() -> int:
 	platform_count += 1
 	var chosen_type = PlatformScript.Type.NORMAL
 	
 	# Special platform appears about once every 8 to 10 platforms (12% chance)
-	if platform_count > 3 and randf() < 0.15:
+	if platform_count > 4 and randf() < 0.15:
 		var specials = [
 			PlatformScript.Type.MOVING,
 			PlatformScript.Type.CRUMBLE,
@@ -76,8 +86,7 @@ func _spawn_next_platform() -> void:
 			PlatformScript.Type.MEME
 		]
 		chosen_type = specials[randi() % specials.size()]
-		
-	_spawn_platform_at(Vector2(spawn_x, highest_spawned_y), chosen_type)
+	return chosen_type
 
 func _spawn_platform_at(pos: Vector2, type: int) -> void:
 	var plat = platform_scene.instantiate()
