@@ -18,10 +18,10 @@ enum Type {
 @onready var spikes: Node2D = $Visuals/Spikes
 
 # Moving platform variables
-var move_speed: float = 240.0
+var move_speed: float = 135.0
 var move_direction: float = 1.0
-var left_limit: float = 100.0
-var right_limit: float = 1820.0
+var left_limit: float = 75.0
+var right_limit: float = 405.0
 
 # Crumble state
 var is_broken: bool = false
@@ -36,7 +36,8 @@ func _ready() -> void:
 	elif ResourceLoader.exists("res://assets/sprites/red_spike_platform.svg"):
 		thorn_texture = load("res://assets/sprites/red_spike_platform.svg")
 	apply_type_style()
-	right_limit = get_viewport_rect().size.x - 100.0
+	left_limit = 75.0
+	right_limit = get_viewport_rect().size.x - 75.0
 	# Randomize moving platform start direction
 	if randf() > 0.5:
 		move_direction = -1.0

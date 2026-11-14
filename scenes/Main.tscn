@@ -24,11 +24,11 @@ grow_vertical = 2
 color = Color(0.0588235, 0.0784314, 0.137255, 1)
 
 [node name="StarParticles" type="CPUParticles2D" parent="Background"]
-position = Vector2(576, 324)
+position = Vector2(240, 400)
 amount = 28
 lifetime = 6.0
 emission_shape = 3
-emission_rect_extents = Vector2(576, 324)
+emission_rect_extents = Vector2(240, 400)
 direction = Vector2(0, 1)
 spread = 15.0
 gravity = Vector2(0, 25)
@@ -39,7 +39,7 @@ scale_amount_max = 3.5
 color = Color(1, 1, 1, 0.28)
 
 [node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(576, 324)
+position = Vector2(240, 400)
 script = ExtResource("2_cam")
 
 [node name="Spawner" type="Node2D" parent="."]
@@ -48,7 +48,7 @@ script = ExtResource("3_spawn")
 [node name="Effects" parent="." instance=ExtResource("6_effects")]
 
 [node name="Robot" parent="." instance=ExtResource("4_robot")]
-position = Vector2(576, 450)
+position = Vector2(240, 480)
 
 [node name="HUD" parent="." instance=ExtResource("5_hud")]
 

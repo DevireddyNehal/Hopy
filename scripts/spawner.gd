@@ -47,10 +47,10 @@ func _spawn_initial_platforms() -> void:
 	highest_spawned_y = center_y + 180.0
 	last_x = center_x
 	
-	# 1. Guaranteed first safe landing platform directly underneath the robot (2.5x wide!)
+	# 1. Guaranteed first safe landing platform directly underneath the robot (1.8x wide runway!)
 	var start_plat = _spawn_platform_at(Vector2(center_x, highest_spawned_y), PlatformScript.Type.NORMAL)
 	if start_plat:
-		start_plat.scale = Vector2(2.5, 1.0)
+		start_plat.scale = Vector2(1.8, 1.0)
 	
 	# 2. Pre-spawn a clean trail of platforms climbing upward (9 platforms for initial view)
 	for i in range(9):
@@ -61,14 +61,14 @@ func _spawn_next_platform() -> void:
 	highest_spawned_y -= gap
 	
 	var screen_w = get_viewport_rect().size.x
-	var min_x = 100.0
-	var max_x = screen_w - 100.0
+	var min_x = 75.0
+	var max_x = screen_w - 75.0
 	
 	# Guaranteed reach rule:
-	# Single, clear platform per tier within +-300px of the last one.
-	var offset_x = randf_range(-300.0, 300.0)
-	if abs(offset_x) < 70.0:
-		offset_x = 90.0 if offset_x >= 0 else -90.0
+	# Single, clear platform per tier within +-180px of the last one.
+	var offset_x = randf_range(-180.0, 180.0)
+	if abs(offset_x) < 40.0:
+		offset_x = 60.0 if offset_x >= 0 else -60.0
 		
 	var spawn_x = clampf(last_x + offset_x, min_x, max_x)
 	last_x = spawn_x
