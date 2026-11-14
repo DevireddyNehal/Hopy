@@ -73,5 +73,27 @@ func _ready() -> void:
 	assert(GameState.sfx_start != null, "start_game.mp3 must be loaded in GameState")
 	print("✓ Starting audio 'Chaliye shuru karte hain' verified")
 	
+	# Test 8: Forgiving edge & non-level platform jump detection
+	var test_plat = plat_scene.instantiate()
+	test_plat.global_position = Vector2(200, 200)
+	add_child(test_plat)
+	
+	var edge_robot = robot_scene.instantiate()
+	edge_robot.global_position = Vector2(248, 208) # At right edge, feet below platform top
+	edge_robot.velocity.y = 150.0 # Falling
+	add_child(edge_robot)
+	
+	# When falling and touching edge/not level: must trigger jump
+	test_plat._try_trigger_landing(edge_robot)
+	assert(edge_robot.velocity.y == -960.0, "Touching platform edge while falling must trigger bounce")
+	
+	# When rocketing upward: must NOT trigger bounce (phases through)
+	edge_robot.velocity.y = -500.0
+	test_plat._try_trigger_landing(edge_robot)
+	assert(edge_robot.velocity.y == -500.0, "Rocketing upward through platform must not trigger premature bounce")
+	print("✓ Forgiving edge & non-level platform landing verified")
+	test_plat.queue_free()
+	edge_robot.queue_free()
+	
 	print("--- ALL NEW FEATURE TESTS PASSED SUCCESSFULLY! ---\n")
 	get_tree().quit(0)

@@ -13,6 +13,7 @@ enum Type {
 @export var platform_type: Type = Type.NORMAL
 
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
+@onready var landing_area: Area2D = $LandingArea
 @onready var visuals: Node2D = $Visuals
 @onready var sprite: Sprite2D = $Visuals/Sprite2D
 @onready var spikes: Node2D = $Visuals/Spikes
@@ -50,6 +51,9 @@ func _ready() -> void:
 	move_speed = randf_range(170.0 + (diff * 50.0), 245.0 + (diff * 75.0))
 	if randf() > 0.5:
 		move_direction = -1.0
+		
+	if landing_area:
+		landing_area.body_entered.connect(_on_landing_area_body_entered)
 
 func _physics_process(delta: float) -> void:
 	if platform_type == Type.MOVING and not is_broken:
@@ -60,6 +64,9 @@ func _physics_process(delta: float) -> void:
 		elif position.x >= right_limit:
 			position.x = right_limit
 			move_direction = -1.0
+			
+	# Generous landing detection for edges and non-level side contacts
+	_check_landing_area()
 
 func apply_type_style() -> void:
 	if not sprite:
@@ -108,6 +115,37 @@ func apply_type_style() -> void:
 			sprite.modulate = Color(1.0, 0.2, 0.2) # Crimson hazard
 		Type.MEME:
 			sprite.modulate = Color(1.0, 0.88, 0.1) # Golden yellow
+
+func _on_landing_area_body_entered(body: Node2D) -> void:
+	_try_trigger_landing(body)
+
+func _check_landing_area() -> void:
+	if not landing_area or is_broken:
+		return
+	for body in landing_area.get_overlapping_bodies():
+		_try_trigger_landing(body)
+
+func _try_trigger_landing(body: Node2D) -> void:
+	if is_broken:
+		return
+	if body is Robot or body.name == "Robot" or body.has_method("bounce"):
+		var robot = body
+		if robot.get("is_dead") == true or robot.get("is_falling_death") == true:
+			return
+			
+		# Thorn hazard check: keep hazard bounding fair to visual spikes
+		if platform_type == Type.THORN:
+			var plat_hw = 44.0 * absf(scale.x)
+			if absf(robot.global_position.x - global_position.x) > plat_hw + 8.0:
+				return
+				
+		# Only bounce if falling or at jump apex (not rocketing upward through platforms)
+		if robot.velocity.y >= -60.0:
+			# Gently elevate robot if slightly below platform top for crisp, responsive jump feel
+			var top_y = global_position.y - 28.0
+			if robot.global_position.y > top_y:
+				robot.global_position.y = top_y
+			on_robot_landed(robot)
 
 func on_robot_landed(robot: CharacterBody2D) -> void:
 	if is_broken:
@@ -162,6 +200,8 @@ func _trigger_crumble() -> void:
 	tween.tween_property(visuals, "position:x", 0.0, 0.04)
 	tween.tween_callback(func():
 		collision_shape.set_deferred("disabled", true)
+		if landing_area:
+			landing_area.set_deferred("monitoring", false)
 	)
 	# Fade out & drop
 	tween.tween_property(visuals, "modulate:a", 0.0, 0.2)

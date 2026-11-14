@@ -23,6 +23,7 @@ var current_bounce_multiplier: float = 1.0
 var steer_multiplier: float = 1.0
 var is_dead: bool = false
 var is_falling_death: bool = false
+var last_bounce_time: float = -10.0
 
 func _ready() -> void:
 	# Initialize base scale
@@ -83,16 +84,15 @@ func _physics_process(delta: float) -> void:
 	# 3. Move with physics
 	move_and_slide()
 	
-	# 4. Auto-bounce ONLY when landing on an actual platform while falling
-	if is_on_floor() and was_falling:
+	# 4. Auto-bounce when touching any platform while falling or at jump apex (forgiving edges & non-level contacts)
+	var can_bounce = (was_falling or velocity.y >= -60.0) and not is_dead and not is_falling_death
+	if can_bounce:
 		for i in get_slide_collision_count():
 			var collision = get_slide_collision(i)
 			var collider = collision.get_collider()
-			if collision.get_normal().y < -0.5:
-				if collider and collider.has_method("on_robot_landed"):
-					collider.on_robot_landed(self)
-					break
-		# Fixed: NEVER bounce on floor or arbitrary bodies!
+			if collider and collider.has_method("on_robot_landed"):
+				collider.on_robot_landed(self)
+				break
 	
 	# 5. Screen boundary handling (wrapping):
 	var center_x = get_viewport_rect().size.x / 2.0
@@ -166,8 +166,13 @@ func die() -> void:
 	GameState.end_game()
 
 func bounce(multiplier: float = 1.0) -> void:
-	if is_dead:
+	if is_dead or is_falling_death:
 		return
+	var current_time = Time.get_ticks_msec() / 1000.0
+	if current_time - last_bounce_time < 0.10:
+		return
+	last_bounce_time = current_time
+	
 	current_bounce_multiplier = multiplier
 	velocity.y = get_effective_bounce_velocity() * current_bounce_multiplier
 	
