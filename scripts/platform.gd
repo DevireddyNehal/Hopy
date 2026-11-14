@@ -39,9 +39,8 @@ const MEME_RISE: float = 60.0
 @export var move_right_distance: float = 120.0
 ## +1.0 starts moving right, -1.0 starts moving left.
 @export var start_direction: float = 1.0
-@export var meme_messages: PackedStringArray = PackedStringArray([
-	"Hop!", "Much bounce", "Respect", "Hopy moment", "Too fast", "Wow"
-])
+## Leave empty to load messages from data/meme_text.json.
+@export var meme_messages: PackedStringArray = PackedStringArray()
 
 var _origin_x: float = 0.0
 var _direction: float = 1.0
@@ -64,6 +63,8 @@ func _ready() -> void:
 	_direction = -1.0 if start_direction < 0.0 else 1.0
 	_crumble_timer.wait_time = CRUMBLE_DELAY
 	_visual.color = _kind_color()
+	if meme_messages.is_empty():
+		meme_messages = MemeText.load_messages()
 	_sensor.body_entered.connect(_on_landing_sensor_body_entered)
 	_sensor.body_exited.connect(_on_landing_sensor_body_exited)
 	_crumble_timer.timeout.connect(_on_crumble_timer_timeout)
@@ -110,6 +111,8 @@ func _on_landing_sensor_body_entered(body: Node2D) -> void:
 		return
 	var player := body as CharacterBody2D
 	if player.velocity.y <= 0.0:
+		return
+	if kind == Kind.CRUMBLE and _crumble_started:
 		return
 	var id: int = player.get_instance_id()
 	if _contacts.has(id):
@@ -251,5 +254,5 @@ func _kind_color() -> Color:
 		Kind.GLITCH:
 			return Color(0.3, 1.0, 0.45)
 		Kind.MEME:
-			return Color(1.0, 0.45, 0.8)
+			return Color(1.0, 0.85, 0.2)
 	return Color.WHITE

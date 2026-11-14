@@ -26,7 +26,8 @@ effects.connect_platform(platform)
 Call `effects.clear_all()` when restarting a run. Other scripts can request
 effects with `effects.trigger(&"sparkle", world_position)`,
 `effects.trigger(&"confetti", world_position)`, `effects.trigger(&"pulse")`,
-or `effects.trigger(&"flip")`.
+`effects.trigger(&"flip")`, `effects.trigger(&"glitch")`, or
+`effects.trigger(&"rainbow_trail")`. The position is optional for `trigger()`.
 
 The manager maps platform landings to cosmetic effects, limits active particles
 to 400, and ignores repeated landing events from the same platform for 50 ms.
@@ -37,13 +38,15 @@ its pivot centered for a centered flip.
 | --- | --- |
 | Normal or moving | Sparkle burst and character color pulse |
 | Crumble | Sparkle burst and pixel emoji; shatter shards when it breaks |
-| Rainbow | Sparkle burst, 40 confetti particles, color pulse, and flip |
-| Glitch | Sparkle burst, pixel emoji, and cyan-tinted pulse |
+| Rainbow | Sparkle burst, 40 confetti particles, color pulse, flip, and rainbow trail |
+| Glitch | Sparkle burst, pixel emoji, cyan-tinted pulse, and fullscreen glitch overlay |
 | Meme | Sparkle burst, pixel emoji, and flip |
 
 `platform_landed` handles the landing effects. The manager ignores the
-`rainbow`, `glitch`, `meme`, and `crumble_start` special-effect signals to avoid
-duplicating them; `crumble_break` triggers the shatter effect.
+`rainbow`, `meme`, and `crumble_start` special-effect signals to avoid
+duplicates; `glitch` starts its overlay, and `crumble_break` triggers shatter.
+Meme popup messages are loaded and cached from `data/meme_text.json`, with a
+built-in fallback if the data file is unavailable or invalid.
 
 The manager pools particles and caps the active count at 400. Landing and
 platform-side checks prevent duplicate effects. New pulse or flip tweens replace
@@ -56,7 +59,7 @@ their connection and cooldown records cleared.
 | --- | --- | --- | --- |
 | `platform_landed(platform_type, landing_position)` | `Platform` | Once per new landing contact, before the bounce | `EffectsManager`; optional score or stats listeners |
 | `platform_destroyed(platform)` | `Platform` | Once when `despawn()` removes it after a crumble break | `EffectsManager`; the generator should also remove it from its list |
-| `special_effect_triggered(effect_type, effect_position)` | `Platform` | Rainbow, glitch, meme, crumble start, or crumble break | `EffectsManager` handles only `crumble_break`; landing effects cover the other events |
+| `special_effect_triggered(effect_type, effect_position)` | `Platform` | Rainbow, glitch, meme, crumble start, or crumble break | `EffectsManager` handles `glitch` and `crumble_break`; landing effects cover the other events |
 | `steering_modifier_requested(multiplier, duration)` | `Platform` | On a glitch landing | Informational; the player already receives this through `PlayerAdapter` |
 
 `EffectsManager` has no signals of its own. Other scripts request effects with
@@ -99,7 +102,7 @@ case to `EffectsManager` if a new type needs visual effects.
 | Crumble cleanup | The one-shot timer starts once; the break tween calls `despawn()` |
 | Duplicate landings | Platforms track player instance IDs until sensor exit; effects also apply a 50 ms per-platform cooldown |
 | Repeated destruction | `_destroyed` and queued-deletion checks prevent duplicate destroy signals |
-| Temporary effects | Steering requests replace and restart the timer; visual tweens are killed before replacement |
+| Temporary effects | Steering requests replace and restart the timer; visual tweens, rainbow trails, and glitch overlays clean up on restart |
 | Delta-time updates | Moving platforms, steering timeouts, and particles use `delta` |
 
 The meme popup is added to `get_tree().current_scene`; it disappears if that
@@ -109,9 +112,11 @@ the player during the 0.15-second delay before breaking.
 ### Automated tests
 
 Run the test scene with F6 in the editor or use
-`godot --headless --path . --scene res://tests/platform_tests.tscn`. The tests
-call platform handlers directly, so they do not require physics simulation. In
-headless mode, the script exits with code 1 if any test fails.
+`godot --headless --path . --scene res://tests/platform_tests.tscn`. It covers
+platform behavior, meme loading, the glitch overlay, rainbow trail, and
+position-free triggers. The tests call platform handlers directly, so they do
+not require physics simulation. In headless mode, the script exits with code 1
+if any test fails.
 
 ### Manual checks
 
@@ -123,3 +128,5 @@ headless mode, the script exits with code 1 if any test fails.
    for errors.
 5. If a "player is missing method" warning appears, implement that method on the
    player script.
+6. Trigger the rainbow trail and glitch overlay; the trail should expire and
+   the overlay should hide when its tween finishes.

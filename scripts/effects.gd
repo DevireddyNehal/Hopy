@@ -7,6 +7,10 @@ extends Node2D
 
 const MAX_ACTIVE_PARTICLES: int = 400
 const LANDING_COOLDOWN_MSEC: int = 50
+const RAINBOW_TRAIL_DURATION: float = 0.6
+const RAINBOW_TRAIL_INTERVAL: float = 0.035
+const GLITCH_OVERLAY_DURATION: float = 1.0
+const GLITCH_SHADER_PATH: String = "res://shaders/glitch.gdshader"
 
 const PIXEL_PATTERNS = [
 	[".X.X.", "XXXXX", "XXXXX", ".XXX.", "..X.."],
@@ -23,6 +27,10 @@ const CONFETTI_COLORS = [
 ]
 const SPARK_COLORS = [Color(0.3, 0.95, 1.0), Color(0.7, 0.55, 1.0), Color(1.0, 1.0, 1.0)]
 const SHATTER_COLORS = [Color(0.95, 0.55, 0.25), Color(0.55, 0.36, 1.0)]
+const RAINBOW_TRAIL_COLORS = [
+	Color(1.0, 0.4, 0.4), Color(1.0, 0.9, 0.4), Color(0.5, 1.0, 0.5),
+	Color(0.4, 0.8, 1.0), Color(0.8, 0.5, 1.0)
+]
 
 @onready var _container: Node2D = %Particles
 
@@ -32,6 +40,12 @@ var _character: Node2D = null
 var _base_modulate: Color = Color.WHITE
 var _pulse_tween: Tween
 var _flip_tween: Tween
+var _glitch_tween: Tween
+var _glitch_layer: CanvasLayer
+var _glitch_rect: ColorRect
+var _trail_left: float = 0.0
+var _trail_timer: float = 0.0
+var _trail_index: int = 0
 var _last_landing_msec: Dictionary = {}
 var _connected_ids: Dictionary = {}
 
@@ -52,7 +66,7 @@ class Particle extends Node2D:
 	var radius: float = 3.0
 	var shape: int = SHAPE_CIRCLE
 	var pattern: Array = []
-	var manager: EffectsManager
+	var manager: EffectsManager = null
 
 	func _process(delta: float) -> void:
 		age += delta
@@ -87,6 +101,17 @@ class Particle extends Node2D:
 func _ready() -> void:
 	if _container == null or not is_instance_valid(_container):
 		push_error("EffectsManager: missing unique node 'Particles'. Check scenes/Effects.tscn.")
+	_build_glitch_overlay()
+
+
+func _process(delta: float) -> void:
+	if _trail_left <= 0.0:
+		return
+	_trail_left -= delta
+	_trail_timer -= delta
+	if _trail_timer <= 0.0 and _character != null and is_instance_valid(_character):
+		_trail_timer = RAINBOW_TRAIL_INTERVAL
+		_spawn_trail_puff(_character.global_position)
 
 
 ## Bind a visual child such as Sprite2D, never the physics body.
@@ -122,6 +147,12 @@ func clear_all() -> void:
 		_pulse_tween.kill()
 	if _flip_tween != null and _flip_tween.is_valid():
 		_flip_tween.kill()
+	if _glitch_tween != null and _glitch_tween.is_valid():
+		_glitch_tween.kill()
+	_trail_left = 0.0
+	_set_glitch_intensity(0.0)
+	if _glitch_rect != null and is_instance_valid(_glitch_rect):
+		_glitch_rect.visible = false
 	if _character != null and is_instance_valid(_character):
 		_character.modulate = _base_modulate
 		_character.rotation = 0.0
@@ -142,6 +173,10 @@ func trigger(effect_type: StringName, world_pos: Vector2 = Vector2.ZERO) -> void
 			pulse_character()
 		&"flip":
 			flip_character()
+		&"rainbow_trail":
+			start_rainbow_trail()
+		&"glitch":
+			play_glitch()
 
 
 func _on_platform_landed(kind: int, landing_position: Vector2, source: Platform) -> void:
@@ -157,6 +192,7 @@ func _on_platform_landed(kind: int, landing_position: Vector2, source: Platform)
 			spawn_confetti(landing_position, 40)
 			pulse_character()
 			flip_character()
+			start_rainbow_trail()
 		Platform.Kind.GLITCH:
 			spawn_pixel_emoji(landing_position, 6)
 			pulse_character(Color(0.6, 1.6, 1.0))
@@ -165,10 +201,13 @@ func _on_platform_landed(kind: int, landing_position: Vector2, source: Platform)
 			flip_character()
 
 
-## Other special-effect signals are covered by platform_landed.
+## Handles effects that are not already covered by platform_landed.
 func _on_special_effect(effect_type: StringName, effect_position: Vector2, _source: Platform) -> void:
-	if effect_type == &"crumble_break":
-		spawn_shatter(effect_position)
+	match effect_type:
+		&"crumble_break":
+			spawn_shatter(effect_position)
+		&"glitch":
+			play_glitch()
 
 
 func _on_platform_destroyed(platform: Platform) -> void:
@@ -246,6 +285,21 @@ func spawn_shatter(world_pos: Vector2) -> void:
 		particle.spin = randf_range(-8.0, 8.0)
 
 
+## Rainbow streak that follows the character for a short time.
+func start_rainbow_trail(duration: float = RAINBOW_TRAIL_DURATION) -> void:
+	_trail_left = maxf(_trail_left, duration)
+	_trail_timer = 0.0
+
+
+func _spawn_trail_puff(world_pos: Vector2) -> void:
+	_trail_index = (_trail_index + 1) % RAINBOW_TRAIL_COLORS.size()
+	var particle := _make_particle(world_pos + Vector2(randf_range(-6.0, 6.0), 6.0),
+		Vector2(randf_range(-20.0, 20.0), randf_range(30.0, 60.0)),
+		0.5, RAINBOW_TRAIL_COLORS[_trail_index], 4.0, Particle.SHAPE_CIRCLE)
+	if particle != null:
+		particle.gravity = -40.0
+
+
 ## Flash the character tint, then restore its original color.
 func pulse_character(flash: Color = Color(1.6, 1.6, 1.6, 1.0), duration: float = 0.18) -> void:
 	if _character == null or not is_instance_valid(_character):
@@ -276,6 +330,53 @@ func flip_character(duration: float = 0.45) -> void:
 func _reset_character_rotation() -> void:
 	if _character != null and is_instance_valid(_character):
 		_character.rotation = 0.0
+
+
+## Fullscreen glitch overlay. Starting it again replaces the previous tween.
+func play_glitch(duration: float = GLITCH_OVERLAY_DURATION) -> void:
+	if _glitch_rect == null or not is_instance_valid(_glitch_rect):
+		return
+	if _glitch_tween != null and _glitch_tween.is_valid():
+		_glitch_tween.kill()
+	_glitch_rect.visible = true
+	_set_glitch_intensity(1.0)
+	_glitch_tween = create_tween()
+	_glitch_tween.tween_method(_set_glitch_intensity, 1.0, 0.0, duration)
+	_glitch_tween.tween_callback(_hide_glitch)
+
+
+func _hide_glitch() -> void:
+	if _glitch_rect != null and is_instance_valid(_glitch_rect):
+		_glitch_rect.visible = false
+
+
+func _set_glitch_intensity(value: float) -> void:
+	if _glitch_rect == null or not is_instance_valid(_glitch_rect):
+		return
+	var material := _glitch_rect.material as ShaderMaterial
+	if material != null:
+		material.set_shader_parameter("intensity", value)
+
+
+func _build_glitch_overlay() -> void:
+	var shader := load(GLITCH_SHADER_PATH) as Shader
+	if shader == null:
+		push_warning("EffectsManager: glitch shader missing at %s. Glitch overlay disabled." % GLITCH_SHADER_PATH)
+		return
+	_glitch_layer = CanvasLayer.new()
+	_glitch_layer.layer = 5
+	add_child(_glitch_layer)
+
+	var material := ShaderMaterial.new()
+	material.shader = shader
+	material.set_shader_parameter("intensity", 0.0)
+
+	_glitch_rect = ColorRect.new()
+	_glitch_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_glitch_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_glitch_rect.material = material
+	_glitch_rect.visible = false
+	_glitch_layer.add_child(_glitch_rect)
 
 
 func _make_particle(world_pos: Vector2, velocity: Vector2, life: float, tint: Color,

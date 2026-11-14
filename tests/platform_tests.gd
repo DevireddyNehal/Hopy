@@ -1,9 +1,10 @@
 extends Node
-## Automated gameplay tests for platforms and PlayerAdapter.
+## Automated gameplay tests for platforms, PlayerAdapter, MemeText, and effects.
 ## Attach to a plain Node in an empty scene and run with F6.
 ## Landings are simulated by calling the platform's handlers directly.
 
 const PLATFORM_SCENE: PackedScene = preload("res://scenes/Platform.tscn")
+const EFFECTS_SCENE: PackedScene = preload("res://scenes/Effects.tscn")
 const EPSILON: float = 0.001
 
 var _passed: int = 0
@@ -55,6 +56,11 @@ func run_all() -> void:
 	await test_moving_platform_stays_in_bounds()
 	await test_non_player_body_is_ignored()
 	await test_special_sequence()
+	await test_crumble_second_landing_does_not_bounce()
+	test_meme_loader_returns_messages()
+	await test_glitch_overlay_exists_and_toggles()
+	await test_rainbow_trail_starts_and_expires()
+	await test_trigger_accepts_missing_position()
 
 
 func _check(condition: bool, label: String) -> void:
@@ -256,3 +262,64 @@ func test_special_sequence() -> void:
 	_check(player.boosted_calls == 1, "one boosted bounce (rainbow)")
 	platforms.append(player)
 	await _cleanup(platforms)
+
+
+func test_crumble_second_landing_does_not_bounce() -> void:
+	print("Crumble rebounce guard")
+	var platform := _make_platform(Platform.Kind.CRUMBLE)
+	var player := _make_player()
+	_land(platform, player)
+	_check(player.bounce_calls == 1, "first crumble landing bounces once")
+	_leave(platform, player)
+	_land(platform, player)
+	_check(player.bounce_calls == 1, "second landing after crumble starts does not bounce")
+	await _cleanup([platform, player])
+
+
+func test_meme_loader_returns_messages() -> void:
+	print("Meme text loader")
+	var messages: PackedStringArray = MemeText.load_messages()
+	_check(not messages.is_empty(), "meme loader returns at least one message")
+	var all_text: bool = true
+	for message in messages:
+		if message.strip_edges().is_empty():
+			all_text = false
+	_check(all_text, "meme loader returns no empty messages")
+
+
+func test_glitch_overlay_exists_and_toggles() -> void:
+	print("Glitch overlay")
+	var effects: EffectsManager = EFFECTS_SCENE.instantiate() as EffectsManager
+	add_child(effects)
+	await get_tree().process_frame
+	_check(effects._glitch_rect != null, "glitch overlay rect was built")
+	_check(effects._glitch_rect != null and not effects._glitch_rect.visible, "glitch overlay starts hidden")
+	effects.play_glitch(0.2)
+	_check(effects._glitch_rect != null and effects._glitch_rect.visible, "play_glitch shows the overlay")
+	await get_tree().create_timer(0.4).timeout
+	_check(effects._glitch_rect == null or not effects._glitch_rect.visible, "overlay hides after its duration")
+	await _cleanup([effects])
+
+
+func test_rainbow_trail_starts_and_expires() -> void:
+	print("Rainbow trail")
+	var effects: EffectsManager = EFFECTS_SCENE.instantiate() as EffectsManager
+	add_child(effects)
+	await get_tree().process_frame
+	effects.start_rainbow_trail(0.2)
+	_check(effects._trail_left > 0.0, "trail is active after start_rainbow_trail")
+	await get_tree().create_timer(0.4).timeout
+	_check(effects._trail_left <= 0.0, "trail expires after its duration")
+	await _cleanup([effects])
+
+
+func test_trigger_accepts_missing_position() -> void:
+	print("Trigger API without position")
+	var effects: EffectsManager = EFFECTS_SCENE.instantiate() as EffectsManager
+	add_child(effects)
+	await get_tree().process_frame
+	effects.trigger(&"pulse")
+	effects.trigger(&"flip")
+	effects.trigger(&"glitch")
+	_check(true, "pulse, flip, and glitch accept an omitted position")
+	await _cleanup([effects])
