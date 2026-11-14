@@ -9,28 +9,44 @@ extends CanvasLayer
 
 var death_lines: Dictionary = {
 	"low": [
+		"A masterclass in rapid downward acceleration.",
+		"Wow, congratulations on discovering the spacebar.",
+		"My grandma's Wi-Fi router jumps higher than that.",
+		"Did gravity offend you personally?",
+		"Tremendous performance. Truly inspiring.",
+		"You spent more time on the title screen than in the air.",
+		"The platforms were right there, bro. Literally right there.",
+		"10/10 form on that immediate plunge.",
 		"Bro didn't even leave the launch pad.",
+		"Did you play with your eyes closed?",
 		"Gravity: 1, You: 0.",
 		"Bro didn't even try.",
-		"It's literally just jumping, bro.",
-		"Did you play with your eyes closed?",
 		"L + ratio + fell down."
 	],
 	"mid": [
-		"500 points? Barely made it past the tutorial.",
+		"500 points! Here's your medal made of participation ribbons.",
+		"So close to being average, yet so far.",
+		"Bro thought he was him for exactly 8 seconds.",
+		"Look at you, surviving past the tutorial. Want a cookie?",
+		"Almost made it to a respectable score. Almost.",
+		"You dodged three platforms just to faceplant into the fourth. Genius.",
+		"The spikes didn't even have to move to get you.",
+		"Halfway to decent, 100% to disappointed.",
+		"Bro conquered 500 points and decided his work here was done.",
+		"That was definitely one of the runs of all time.",
 		"Skill issue. Not even close to 1500.",
-		"Bro thought 500 was impressive.",
-		"Mid gameplay. Try using two hands next time.",
 		"Bro fell off right when it mattered.",
-		"You survived the warmup, then immediately folded.",
 		"Choked before reaching a real score."
 	],
 	"high": [
-		"Okay, now you're cooking! Certified hopper.",
-		"1500+ score! Absolute cosmic menace.",
-		"Gigachad jump mechanics. Touch grass anyway.",
+		"1500+! I'd tell you to go outside, but you probably forgot what the sun looks like.",
+		"Alright show-off, save some altitude for the rest of us.",
+		"NASA called, they want their satellite back.",
+		"Okay, fine, you're cracked. Now please take a shower.",
+		"1500+ score? Bro found the sweat button.",
 		"Legitimate gamer detected. Insane height!",
-		"Respect earned. You actually reached the stratosphere."
+		"Respect earned. You actually reached the stratosphere.",
+		"A godly ascent. Still died at the end though."
 	]
 }
 
