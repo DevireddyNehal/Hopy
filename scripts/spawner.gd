@@ -126,12 +126,18 @@ func _spawn_next_platform() -> void:
 				plat.is_erratic = true
 		last_x = spawn_x
 		
-	# --- Floating Spike Ball Hazard Spawn (Active from 300 onwards) ---
-	if GameState.score >= 300 and chosen_type != PlatformScript.Type.THORN and spike_ball_scene:
+	# --- Floating Spike Ball Hazard Spawn (Active from 200 onwards) ---
+	if GameState.score >= 200 and chosen_type != PlatformScript.Type.THORN and spike_ball_scene:
 		platforms_since_last_spike += 1
-		var diff_after_300 = clampf(float(GameState.score - 300) / 1000.0, 0.0, 1.0)
-		var spike_chance = 0.18 + (diff_after_300 * 0.12) # 18% -> 30%
-		if randf() < spike_chance and platforms_since_last_spike >= 3:
+		var spike_chance: float
+		if GameState.score >= 500:
+			var diff_after_500 = clampf(float(GameState.score - 500) / 1000.0, 0.0, 1.0)
+			spike_chance = 0.42 + (diff_after_500 * 0.15) # 42% -> 57%
+		else:
+			var diff_after_200 = clampf(float(GameState.score - 200) / 300.0, 0.0, 1.0)
+			spike_chance = 0.30 + (diff_after_200 * 0.12) # 30% -> 42%
+			
+		if randf() < spike_chance and platforms_since_last_spike >= 2:
 			var ball_pos = _calculate_safe_hazard_position(last_x, spawn_x, highest_spawned_y, gap, screen_w, min_x, max_x)
 			if ball_pos != Vector2.ZERO:
 				var sb = _spawn_spike_ball_at(ball_pos)

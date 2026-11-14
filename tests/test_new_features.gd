@@ -111,9 +111,9 @@ func _ready() -> void:
 	add_child(main_node)
 	var spawner = main_node.get_node("Spawner")
 	
-	# Verify that no spike balls spawn when score < 300
-	GameState.score = 250
-	assert(GameState.score < 300, "Score is under 300 for testing")
+	# Verify that no spike balls spawn when score < 200
+	GameState.score = 150
+	assert(GameState.score < 200, "Score is under 200 for testing")
 	
 	# Verify _is_position_above_any_platform rejects positions above platforms
 	if spawner.active_platforms.size() > 0:
@@ -140,7 +140,7 @@ func _ready() -> void:
 			assert(absf(pos2.x - 380.0) >= 80.0, "Spike must maintain at least 80px breathing room from target platform")
 			assert(not spawner._is_position_above_any_platform(pos2.x, pos2.y), "Spike position must NEVER be above any platform")
 			
-	print("✓ Natural jump path free of spikes, score >= 300 gating, and zero platforms underneath verified")
+	print("✓ Natural jump path free of spikes, score >= 200 gating, and zero platforms underneath verified")
 	main_node.queue_free()
 	
 	# Test 10: Drunk Buff at 500 score with 3s warning, sound, and Linear craft palette
