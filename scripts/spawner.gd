@@ -119,8 +119,8 @@ func _spawn_next_platform() -> void:
 	if GameState.score >= 300 and chosen_type != PlatformScript.Type.THORN and spike_ball_scene:
 		platforms_since_last_spike += 1
 		var diff_after_300 = clampf(float(GameState.score - 300) / 1000.0, 0.0, 1.0)
-		var spike_chance = 0.07 + (diff_after_300 * 0.04) # 7% -> 11%
-		if randf() < spike_chance and platforms_since_last_spike >= 5:
+		var spike_chance = 0.18 + (diff_after_300 * 0.12) # 18% -> 30%
+		if randf() < spike_chance and platforms_since_last_spike >= 3:
 			var ball_pos = _calculate_safe_hazard_position(last_x, spawn_x, highest_spawned_y, gap, screen_w, min_x, max_x)
 			if ball_pos != Vector2.ZERO:
 				_spawn_spike_ball_at(ball_pos)

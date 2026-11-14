@@ -32,17 +32,17 @@ func _ready() -> void:
 	spike_ball.queue_free()
 	robot.queue_free()
 	
-	# Test 3: Inverted controls at 750 score
+	# Test 3: Inverted controls at 700 score (drunk 500 + 200)
 	GameState.start_game()
 	assert(not GameState.are_controls_inverted, "Controls must not be inverted initially")
 	
 	var warning_flag = [false]
 	GameState.controls_inverted_warning_started.connect(func(): warning_flag[0] = true)
 	
-	GameState.update_score(755)
-	assert(warning_flag[0], "controls_inverted_warning_started signal must fire at 750 score")
-	assert(GameState.controls_warning_active, "3-second disclaimer must be active at 750 score")
-	print("✓ 750 score triggers 3-second disclaimer and social credit siren")
+	GameState.update_score(705)
+	assert(warning_flag[0], "controls_inverted_warning_started signal must fire at 700 score")
+	assert(GameState.controls_warning_active, "3-second disclaimer must be active at 700 score")
+	print("✓ 700 score triggers 3-second disclaimer and social credit siren")
 	
 	# Test 4: Falling abyss death with mixkit falling scream
 	assert(GameState.sfx_falling_scream != null, "falling_scream.mp3 must be loaded in GameState")

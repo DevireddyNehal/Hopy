@@ -17,7 +17,7 @@ var color_scheme_index: int = 0
 
 var reached_500: bool = false
 var reached_1000: bool = false
-const INVERT_CONTROLS_THRESHOLD: int = 750 # Controls invert at 750 score
+const INVERT_CONTROLS_THRESHOLD: int = 700 # Controls invert at 700 score (drunk effect 500 + 200)
 var reached_invert_controls: bool = false
 var is_game_active: bool = false
 
@@ -380,13 +380,13 @@ func _trigger_inverted_controls_sequence() -> void:
 
 func _trigger_drunk_sequence() -> void:
 	drunk_warning_active = true
-	play_drunk()
 	drunk_warning_started.emit()
 	var timer = get_tree().create_timer(3.0)
 	timer.timeout.connect(func():
 		if is_game_active:
 			is_drunk = true
 			drunk_warning_active = false
+			play_drunk()
 			drunk_activated.emit()
 			
 			var drunk_end_timer = get_tree().create_timer(DRUNK_DURATION)

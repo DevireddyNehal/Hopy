@@ -22,10 +22,6 @@ var milestone_tween: Tween
 @onready var inverted_label: Label = %InvertedLabel if has_node("%InvertedLabel") else null
 @onready var drunk_indicator: PanelContainer = %DrunkIndicator if has_node("%DrunkIndicator") else null
 
-@onready var left_sidebar: Control = $Control/LeftMemeSideBar if has_node("Control/LeftMemeSideBar") else null
-@onready var right_sidebar: Control = $Control/RightMemeSideBar if has_node("Control/RightMemeSideBar") else null
-var _last_screen_size: Vector2 = Vector2.ZERO
-
 func _ready() -> void:
 	GameState.score_changed.connect(_on_score_changed)
 	GameState.combo_changed.connect(_on_combo_changed)
@@ -52,15 +48,6 @@ func _ready() -> void:
 		inverted_indicator.visible = false
 	if drunk_indicator:
 		drunk_indicator.visible = false
-		
-	get_tree().root.size_changed.connect(_update_sidebar_layout)
-	_update_sidebar_layout.call_deferred()
-
-func _process(_delta: float) -> void:
-	var curr_size = get_viewport().get_visible_rect().size
-	if curr_size != _last_screen_size:
-		_last_screen_size = curr_size
-		_update_sidebar_layout()
 
 func _on_score_changed(new_score: int) -> void:
 	if score_label:
@@ -145,51 +132,6 @@ func _show_milestone(points: int) -> void:
 	milestone_tween.tween_interval(2.0)
 	milestone_tween.tween_property(milestone_banner, "modulate:a", 0.0, 0.3)
 	milestone_tween.tween_callback(func(): milestone_banner.visible = false)
-
-func _update_sidebar_layout() -> void:
-	var vp_rect = get_viewport().get_visible_rect()
-	var screen_w = vp_rect.size.x
-	var screen_h = vp_rect.size.y
-	var center_x = screen_w / 2.0
-	
-	# Central playfield spans [center_x - 270.0, center_x + 270.0]
-	var playfield_left = center_x - 270.0
-	var playfield_right = center_x + 270.0
-	var pillar_width = playfield_left
-	
-	if pillar_width < 120.0:
-		# If the screen is too narrow to have meaningful black margins,
-		# hide sidebars so they NEVER obscure the 540px central gameplay tower!
-		if left_sidebar:
-			left_sidebar.visible = false
-		if right_sidebar:
-			right_sidebar.visible = false
-		return
-		
-	# Screen has plenty of black pillarbox space (e.g. maximized on 1080p desktop)
-	if left_sidebar:
-		left_sidebar.visible = true
-		left_sidebar.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		var left_w = left_sidebar.size.x
-		var left_h = left_sidebar.size.y
-		# Center horizontally inside [0, playfield_left]
-		var target_x = (pillar_width - left_w) / 2.0
-		# Clamp to stay firmly in black area and away from playfield edge
-		target_x = clampf(target_x, 15.0, playfield_left - left_w - 20.0)
-		var target_y = (screen_h - left_h) / 2.0
-		left_sidebar.position = Vector2(target_x, target_y)
-		
-	if right_sidebar:
-		right_sidebar.visible = true
-		right_sidebar.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		var right_w = right_sidebar.size.x
-		var right_h = right_sidebar.size.y
-		# Center horizontally inside [playfield_right, screen_w]
-		var right_center = playfield_right + (pillar_width / 2.0)
-		var target_x = right_center - (right_w / 2.0)
-		target_x = clampf(target_x, playfield_right + 20.0, screen_w - right_w - 15.0)
-		var target_y = (screen_h - right_h) / 2.0
-		right_sidebar.position = Vector2(target_x, target_y)
 
 func _on_controls_warning_started() -> void:
 	if not disclaimer_banner or not countdown_label:
