@@ -7,10 +7,10 @@ const PlatformScript = preload("res://scripts/platform.gd")
 @export var camera: Camera2D
 
 # Vertical gap limits: wide, airy, satisfying bounce arc
-const MIN_GAP_Y: float = 130.0
-const MAX_GAP_Y: float = 210.0
-const BUFFER_AHEAD: float = 1600.0 # Keep spawning well above camera
-const DESPAWN_OFFSET: float = 800.0 # Remove platforms below camera
+const MIN_GAP_Y: float = 180.0
+const MAX_GAP_Y: float = 280.0
+const BUFFER_AHEAD: float = 2200.0 # Keep spawning well above camera
+const DESPAWN_OFFSET: float = 900.0 # Remove platforms below camera
 
 var highest_spawned_y: float = 700.0
 var platform_count: int = 0
