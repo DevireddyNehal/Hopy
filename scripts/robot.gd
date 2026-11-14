@@ -130,8 +130,8 @@ func start_falling_abyss_death() -> void:
 	collision_layer = 0
 	collision_mask = 0
 	
-	# Play the cat-laugh meme sound!
-	GameState.play_cat_laugh()
+	# Play the mixkit-falling-male-scream-391 sound!
+	GameState.play_falling_scream()
 	
 	# Extended falling animation: flailing, spinning, shrinking into the void
 	velocity.x = randf_range(-60.0, 60.0)

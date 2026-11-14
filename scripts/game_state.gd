@@ -40,6 +40,7 @@ var sfx_meme: AudioStream
 var sfx_start: AudioStream
 var sfx_social_credit: AudioStream
 var sfx_cat_laugh: AudioStream
+var sfx_falling_scream: AudioStream
 var are_controls_inverted: bool = false
 var controls_warning_active: bool = false
 var meme_list: Array = []
@@ -54,8 +55,12 @@ var bounce_sounds: Array[AudioStream] = []
 
 func _load_audio_and_data() -> void:
 	bounce_sounds.clear()
-	# Sound 0: Crisp boing / jump
-	if ResourceLoader.exists("res://assets/audio/default_bounce.wav"):
+	# Sound 0: Mac Quack sound (user request: replace default bounce with mac quack)
+	if ResourceLoader.exists("res://assets/audio/mac_quack.mp3"):
+		var s_quack = load("res://assets/audio/mac_quack.mp3")
+		bounce_sounds.append(s_quack)
+		sfx_bounce = s_quack
+	elif ResourceLoader.exists("res://assets/audio/default_bounce.wav"):
 		var s_default = load("res://assets/audio/default_bounce.wav")
 		bounce_sounds.append(s_default)
 		sfx_bounce = s_default
@@ -99,6 +104,10 @@ func _load_audio_and_data() -> void:
 	# Cat laugh meme sound
 	if ResourceLoader.exists("res://assets/audio/cat_laugh.mp3"):
 		sfx_cat_laugh = load("res://assets/audio/cat_laugh.mp3")
+		
+	# Mixkit falling male scream 391
+	if ResourceLoader.exists("res://assets/audio/falling_scream.mp3"):
+		sfx_falling_scream = load("res://assets/audio/falling_scream.mp3")
 		
 	# Load memes
 	if FileAccess.file_exists("res://data/meme_text.json"):
@@ -184,6 +193,14 @@ func play_cat_laugh() -> void:
 		return
 	var p = _get_sfx_player()
 	p.stream = sfx_cat_laugh
+	p.pitch_scale = 1.0
+	p.play()
+
+func play_falling_scream() -> void:
+	if not sfx_falling_scream:
+		return
+	var p = _get_sfx_player()
+	p.stream = sfx_falling_scream
 	p.pitch_scale = 1.0
 	p.play()
 

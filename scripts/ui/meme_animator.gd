@@ -12,7 +12,8 @@ var _timer: float = 0.0
 var _atlas: AtlasTexture
 
 func _ready() -> void:
-	custom_minimum_size = frame_size
+	if custom_minimum_size == Vector2.ZERO:
+		custom_minimum_size = frame_size
 	if sprite_sheet:
 		_atlas = AtlasTexture.new()
 		_atlas.atlas = sprite_sheet

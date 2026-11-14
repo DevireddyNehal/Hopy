@@ -44,17 +44,32 @@ func _ready() -> void:
 	assert(GameState.controls_warning_active, "3-second disclaimer must be active at 1000 score")
 	print("✓ 1000 score triggers 3-second disclaimer and social credit siren")
 	
-	# Test 4: Falling abyss death with cat-laugh meme
+	# Test 4: Falling abyss death with mixkit falling scream
+	assert(GameState.sfx_falling_scream != null, "falling_scream.mp3 must be loaded in GameState")
+	assert(GameState.sfx_cat_laugh != null, "cat_laugh.mp3 must be loaded in GameState")
+	
 	var robot2 = robot_scene.instantiate()
 	add_child(robot2)
 	robot2.start_falling_abyss_death()
 	assert(robot2.is_dead, "Abyss fall must mark robot dead")
 	assert(robot2.is_falling_death, "is_falling_death must be true")
 	assert(robot2.collision_layer == 0 and robot2.collision_mask == 0, "Abyss fall must disable all collision so floor bouncing is impossible")
-	print("✓ Abyss fall triggers extended falling, disables floor collisions, and plays cat-laugh")
+	print("✓ Abyss fall triggers extended falling, disables floor collisions, and plays falling scream")
 	robot2.queue_free()
 	
-	# Test 5: Start game audio
+	# Test 5: DeathScreen Laughing Cat Meme
+	var death_scene = preload("res://scenes/DeathScreen.tscn")
+	var death_instance = death_scene.instantiate()
+	add_child(death_instance)
+	assert(death_instance.has_node("Panel/Margin/VBox/LaughingCatMeme"), "DeathScreen must have LaughingCatMeme node")
+	print("✓ DeathScreen features Laughing Cat meme animation")
+	death_instance.queue_free()
+	
+	# Test 6: Mac Quack bounce sound
+	assert(GameState.bounce_sounds.size() > 0, "bounce_sounds must have entries")
+	print("✓ Mac quack sound loaded as default bounce sound")
+	
+	# Test 7: Start game audio
 	assert(GameState.sfx_start != null, "start_game.mp3 must be loaded in GameState")
 	print("✓ Starting audio 'Chaliye shuru karte hain' verified")
 	

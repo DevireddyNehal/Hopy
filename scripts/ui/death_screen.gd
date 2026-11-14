@@ -52,6 +52,9 @@ func _on_game_over() -> void:
 	is_active = true
 	visible = true
 	
+	# Play the cat laugh meme at the game over screen!
+	GameState.play_cat_laugh()
+	
 	var final_score = GameState.score
 	var best_score = GameState.best_score
 	var is_new_best = (final_score >= best_score and final_score > 0)
@@ -90,4 +93,5 @@ func _restart() -> void:
 	is_active = false
 	visible = false
 	get_tree().paused = false
+	GameState.play_start_game()
 	get_tree().reload_current_scene()
