@@ -40,12 +40,16 @@ func _physics_process(delta: float) -> void:
 		shake_intensity = 0.0
 		offset = Vector2.ZERO
 
-	# Drunk buff camera tilt sway
+	# Drunk buff full-screen nausea: camera breathing zoom, wobbly tilt & lateral weave
 	if GameState.is_drunk:
-		drunk_camera_timer += delta * 2.2
-		rotation = sin(drunk_camera_timer) * 0.024
+		drunk_camera_timer += delta * 2.4
+		rotation = sin(drunk_camera_timer * 1.2) * 0.055
+		var breath = 1.0 + sin(drunk_camera_timer * 1.8) * 0.06
+		zoom = Vector2(breath, breath)
+		offset += Vector2(sin(drunk_camera_timer * 2.0) * 12.0, cos(drunk_camera_timer * 1.5) * 8.0)
 	else:
-		rotation = lerp_angle(rotation, 0.0, 8.0 * delta)
+		rotation = lerp_angle(rotation, 0.0, 6.0 * delta)
+		zoom = lerp(zoom, Vector2.ONE, 6.0 * delta)
 
 	if not target:
 		return
@@ -57,10 +61,10 @@ func _physics_process(delta: float) -> void:
 		if global_position.y < highest_y:
 			highest_y = global_position.y
 			
-	# 3. Falling below screen death condition:
+	# 3. Falling below screen death condition (generous 45px buffer):
 	var half_h = get_viewport_rect().size.y / 2.0
 	var screen_bottom = global_position.y + half_h
-	if target and target.global_position.y > screen_bottom + 15.0:
+	if target and target.global_position.y > screen_bottom + 45.0:
 		if target.has_method("start_falling_abyss_death"):
 			target.start_falling_abyss_death()
 		elif target.has_method("die"):

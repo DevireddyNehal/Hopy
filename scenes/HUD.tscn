@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://scripts/ui/meme_animator.gd" id="2_anim"]
@@ -7,118 +7,124 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/subway_surfers_sheet.png" id="5_subway_tex"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_score"]
-font_size = 54
+font_size = 32
 font_color = Color(1, 1, 1, 1)
-outline_size = 8
+outline_size = 4
 outline_color = Color(0, 0, 0, 0.8)
 
 [sub_resource type="LabelSettings" id="LabelSettings_best"]
-font_size = 30
+font_size = 18
 font_color = Color(1, 0.85, 0.2, 1)
-outline_size = 6
+outline_size = 3
 outline_color = Color(0, 0, 0, 0.8)
 
 [sub_resource type="LabelSettings" id="LabelSettings_combo"]
-font_size = 38
+font_size = 20
 font_color = Color(1, 0.16, 0.52, 1)
-outline_size = 8
+outline_size = 4
 outline_color = Color(0.1, 0, 0.2, 0.9)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_meme"]
-bg_color = Color(0.06, 0.07, 0.15, 0.92)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(1, 0.843137, 0, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-shadow_color = Color(1, 0.84, 0, 0.3)
-shadow_size = 12
-
-[sub_resource type="LabelSettings" id="LabelSettings_meme"]
-font_size = 36
-font_color = Color(1, 0.88, 0.2, 1)
-outline_size = 6
-outline_color = Color(0, 0, 0, 0.9)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_milestone"]
-bg_color = Color(0.06, 0.08, 0.16, 0.94)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(1, 0.3, 0.6, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-shadow_color = Color(1, 0.2, 0.5, 0.4)
-shadow_size = 16
-
-[sub_resource type="LabelSettings" id="LabelSettings_milestone"]
-font_size = 32
-font_color = Color(1, 1, 1, 1)
-outline_size = 8
-outline_color = Color(0, 0, 0, 0.9)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_disclaimer"]
-bg_color = Color(0.06, 0.07, 0.12, 0.92)
+bg_color = Color(0.06, 0.07, 0.12, 0.95)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.96, 0.25, 0.37, 0.85)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-shadow_color = Color(0, 0, 0, 0.35)
-shadow_size = 8
+border_color = Color(0.98, 0.75, 0.14, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
-[sub_resource type="LabelSettings" id="LabelSettings_disclaimer_title"]
-font_size = 15
-font_color = Color(0.96, 0.25, 0.37, 1)
-outline_size = 4
-outline_color = Color(0, 0, 0, 0.9)
-
-[sub_resource type="LabelSettings" id="LabelSettings_disclaimer_sub"]
-font_size = 12
-font_color = Color(0.58, 0.64, 0.72, 1)
+[sub_resource type="LabelSettings" id="LabelSettings_meme"]
+font_size = 13
+font_color = Color(0.98, 0.75, 0.14, 1)
 outline_size = 2
 outline_color = Color(0, 0, 0, 0.9)
 
-[sub_resource type="LabelSettings" id="LabelSettings_countdown"]
-font_size = 17
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_milestone"]
+bg_color = Color(0.06, 0.07, 0.12, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.96, 0.25, 0.37, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="LabelSettings" id="LabelSettings_milestone"]
+font_size = 13
 font_color = Color(1, 1, 1, 1)
-outline_size = 4
+outline_size = 2
+outline_color = Color(0, 0, 0, 0.9)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_disclaimer"]
+bg_color = Color(0.06, 0.07, 0.12, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.96, 0.25, 0.37, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="LabelSettings" id="LabelSettings_disclaimer_title"]
+font_size = 12
+font_color = Color(0.96, 0.25, 0.37, 1)
+outline_size = 2
+outline_color = Color(0, 0, 0, 0.9)
+
+[sub_resource type="LabelSettings" id="LabelSettings_disclaimer_sub"]
+font_size = 10
+font_color = Color(0.58, 0.64, 0.72, 1)
+outline_size = 1
+outline_color = Color(0, 0, 0, 0.9)
+
+[sub_resource type="LabelSettings" id="LabelSettings_countdown"]
+font_size = 12
+font_color = Color(1, 1, 1, 1)
+outline_size = 2
 outline_color = Color(0.8, 0, 0, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_inverted_badge"]
-bg_color = Color(0.8, 0.05, 0.15, 0.88)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 0.9, 0.2, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+bg_color = Color(0.14, 0.05, 0.08, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.96, 0.25, 0.37, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drunk_badge"]
-bg_color = Color(0.12, 0.11, 0.29, 0.9)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
+bg_color = Color(0.07, 0.08, 0.16, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
 border_color = Color(0.51, 0.55, 0.97, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="LabelSettings" id="LabelSettings_drunk"]
+font_size = 12
+font_color = Color(0.75, 0.85, 1, 1)
+outline_size = 1
+outline_color = Color(0, 0, 0, 0.9)
+
+[sub_resource type="LabelSettings" id="LabelSettings_inverted"]
+font_size = 12
+font_color = Color(1, 0.65, 0.75, 1)
+outline_size = 1
+outline_color = Color(0, 0, 0, 0.9)
 
 [node name="HUD" type="CanvasLayer"]
 layer = 10
@@ -140,11 +146,11 @@ anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -270.0
 offset_right = 270.0
-offset_bottom = 90.0
+offset_bottom = 60.0
 grow_horizontal = 2
-theme_override_constants/margin_left = 32
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 32
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 24
 
 [node name="TopBar" type="HBoxContainer" parent="Control/MarginContainer"]
 layout_mode = 2
@@ -175,10 +181,10 @@ layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -160.0
-offset_top = 144.0
-offset_right = 160.0
-offset_bottom = 184.0
+offset_left = -120.0
+offset_top = 70.0
+offset_right = 120.0
+offset_bottom = 98.0
 grow_horizontal = 2
 
 [node name="ComboLabel" type="Label" parent="Control/ComboContainer"]
@@ -201,20 +207,20 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -250.0
-offset_top = -180.0
-offset_right = 250.0
-offset_bottom = -100.0
+offset_left = -100.0
+offset_top = -140.0
+offset_right = 100.0
+offset_bottom = -106.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_meme")
 
 [node name="MarginContainer" type="MarginContainer" parent="Control/MemeCard"]
 layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 12
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
 
 [node name="MemeLabel" type="Label" parent="Control/MemeCard/MarginContainer"]
 layout_mode = 2
@@ -232,20 +238,20 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -260.0
-offset_top = -60.0
-offset_right = 260.0
-offset_bottom = 20.0
+offset_left = -110.0
+offset_top = -45.0
+offset_right = 110.0
+offset_bottom = -13.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_milestone")
 
 [node name="Margin" type="MarginContainer" parent="Control/MilestoneBanner"]
 layout_mode = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
 
 [node name="MilestoneLabel" type="Label" parent="Control/MilestoneBanner/Margin"]
 unique_name_in_owner = true
@@ -262,20 +268,20 @@ layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -180.0
+offset_left = -130.0
 offset_top = 80.0
-offset_right = 180.0
-offset_bottom = 138.0
+offset_right = 130.0
+offset_bottom = 126.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_disclaimer")
 
 [node name="Margin" type="MarginContainer" parent="Control/DisclaimerBanner"]
 layout_mode = 2
-theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 14
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
 
 [node name="VBox" type="VBoxContainer" parent="Control/DisclaimerBanner/Margin"]
 layout_mode = 2
@@ -312,24 +318,25 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -230.0
-offset_top = -102.0
-offset_right = 230.0
-offset_bottom = -64.0
+offset_left = -130.0
+offset_top = -78.0
+offset_right = 130.0
+offset_bottom = -48.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_drunk_badge")
 
 [node name="Margin" type="MarginContainer" parent="Control/DrunkIndicator"]
 layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 4
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 3
 
 [node name="DrunkLabel" type="Label" parent="Control/DrunkIndicator/Margin"]
 layout_mode = 2
 text = "🍺 DRUNK BUFF [+10% JUMP & SWAY] 🥴"
+label_settings = SubResource("LabelSettings_drunk")
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -342,25 +349,26 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -230.0
-offset_top = -58.0
-offset_right = 230.0
-offset_bottom = -20.0
+offset_left = -130.0
+offset_top = -44.0
+offset_right = 130.0
+offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_inverted_badge")
 
 [node name="Margin" type="MarginContainer" parent="Control/InvertedIndicator"]
 layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 4
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 3
 
 [node name="InvertedLabel" type="Label" parent="Control/InvertedIndicator/Margin"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "🔄 REVERSED CONTROLS [LEFT ↔ RIGHT] 🔄"
+label_settings = SubResource("LabelSettings_inverted")
 horizontal_alignment = 1
 vertical_alignment = 1
 

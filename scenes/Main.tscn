@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/Effects.tscn" id="6_effects"]
 [ext_resource type="PackedScene" path="res://scenes/DeathScreen.tscn" id="7_death"]
 [ext_resource type="PackedScene" path="res://scenes/PauseScreen.tscn" id="8_pause"]
-[ext_resource type="Script" path="res://scripts/biome_background.gd" id="9_biome"]
+[ext_resource type="Texture2D" path="res://assets/sprites/handmade_background.png" id="9_bg_tex"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -35,8 +35,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.0588235, 0.0784314, 0.137255, 1)
 
-[node name="BiomeVisuals" type="Control" parent="Background" node_paths=PackedStringArray("camera", "border_left", "border_right", "star_particles")]
-layout_mode = 3
+[node name="BackgroundTexture" type="TextureRect" parent="Background"]
 anchors_preset = 13
 anchor_left = 0.5
 anchor_right = 0.5
@@ -45,12 +44,9 @@ offset_left = -270.0
 offset_right = 270.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
-script = ExtResource("9_biome")
-camera = NodePath("../../Camera2D")
-border_left = NodePath("../BorderLeft")
-border_right = NodePath("../BorderRight")
-star_particles = NodePath("../StarParticles")
+texture = ExtResource("9_bg_tex")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="BorderLeft" type="ColorRect" parent="Background"]
 anchors_preset = 13
@@ -76,6 +72,21 @@ color = Color(0, 0.85, 1, 0.35)
 
 [node name="StarParticles" type="CPUParticles2D" parent="Background"]
 position = Vector2(270, 425)
+amount = 28
+lifetime = 6.0
+emission_shape = 3
+emission_rect_extents = Vector2(270, 425)
+direction = Vector2(0, 1)
+spread = 15.0
+gravity = Vector2(0, 25)
+initial_velocity_min = 15.0
+initial_velocity_max = 35.0
+scale_amount_min = 1.5
+scale_amount_max = 3.5
+color = Color(1, 1, 1, 0.28)
+
+[node name="StarParticlesRight" type="CPUParticles2D" parent="Background"]
+position = Vector2(810, 425)
 amount = 28
 lifetime = 6.0
 emission_shape = 3

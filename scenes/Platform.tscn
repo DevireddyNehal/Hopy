@@ -4,10 +4,10 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/platform.png" id="2_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_platform"]
-size = Vector2(88, 20)
+size = Vector2(104, 20)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_landing"]
-size = Vector2(106, 36)
+size = Vector2(128, 42)
 
 [node name="Platform" type="StaticBody2D" groups=["platforms"]]
 collision_layer = 2
@@ -31,7 +31,7 @@ shape = SubResource("RectangleShape2D_landing")
 [node name="Visuals" type="Node2D" parent="."]
 
 [node name="Sprite2D" type="Sprite2D" parent="Visuals"]
-scale = Vector2(0.185, 0.22)
+scale = Vector2(0.218, 0.22)
 texture = ExtResource("2_tex")
 
 [node name="Spikes" type="Node2D" parent="Visuals"]

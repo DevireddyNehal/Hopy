@@ -82,8 +82,8 @@ func _physics_process(delta: float) -> void:
 	# Drunk buff mechanics: sinusoidal swaying stagger and hilarious wobble
 	var drunk_sway = 0.0
 	if GameState.is_drunk:
-		drunk_timer += delta * 3.8
-		drunk_sway = sin(drunk_timer) * 165.0
+		drunk_timer += delta * 3.2
+		drunk_sway = sin(drunk_timer) * 90.0
 		
 	velocity.x = base_steer + drunk_sway
 	

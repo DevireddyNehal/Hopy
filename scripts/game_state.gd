@@ -17,7 +17,7 @@ var color_scheme_index: int = 0
 
 var reached_500: bool = false
 var reached_1000: bool = false
-const INVERT_CONTROLS_THRESHOLD: int = 500 # TEMPORARY: Set to 500 for testing per user request (revert to 1000 later)
+const INVERT_CONTROLS_THRESHOLD: int = 750 # Controls invert at 750 score
 var reached_invert_controls: bool = false
 var is_game_active: bool = false
 
@@ -39,12 +39,14 @@ signal controls_restored()
 
 const INVERT_DURATION: float = 5.0
 
-const DRUNK_BUFF_THRESHOLD: int = 750
+const DRUNK_DURATION: float = 8.0
+const DRUNK_BUFF_THRESHOLD: int = 500 # Drunk buff activates at 500 score
 var reached_drunk: bool = false
 var is_drunk: bool = false
 var drunk_warning_active: bool = false
 signal drunk_warning_started()
 signal drunk_activated()
+signal drunk_recovered()
 
 var sfx_bounce: AudioStream
 var sfx_rainbow: AudioStream
@@ -386,6 +388,13 @@ func _trigger_drunk_sequence() -> void:
 			is_drunk = true
 			drunk_warning_active = false
 			drunk_activated.emit()
+			
+			var drunk_end_timer = get_tree().create_timer(DRUNK_DURATION)
+			drunk_end_timer.timeout.connect(func():
+				if is_game_active and is_drunk:
+					is_drunk = false
+					drunk_recovered.emit()
+			)
 	)
 
 func increment_combo() -> void:

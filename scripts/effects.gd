@@ -26,7 +26,9 @@ const SHATTER_COLORS = [Color(0.95, 0.55, 0.25), Color(0.55, 0.36, 1.0), Color(0
 
 @onready var _container: Node2D = %Particles
 @onready var _flash_rect: ColorRect = %FlashRect
+@onready var _nausea_rect: ColorRect = %NauseaRect if has_node("%NauseaRect") else null
 
+var _drunk_intensity: float = 0.0
 var _pool: Array[Particle] = []
 var _active: Array[Particle] = []
 var _character: Node2D = null
@@ -92,6 +94,16 @@ func _ready() -> void:
 			GameState.effect_requested.connect(trigger)
 		if GameState.has_signal("milestone_reached"):
 			GameState.milestone_reached.connect(_on_milestone)
+
+func _process(delta: float) -> void:
+	if _nausea_rect and _nausea_rect.material:
+		var target_intensity = 1.0 if GameState.is_drunk else 0.0
+		_drunk_intensity = lerpf(_drunk_intensity, target_intensity, 4.0 * delta)
+		if _drunk_intensity > 0.005:
+			_nausea_rect.visible = true
+			_nausea_rect.material.set_shader_parameter("intensity", _drunk_intensity)
+		else:
+			_nausea_rect.visible = false
 
 func _on_milestone(points: int) -> void:
 	var screen_center = get_viewport_rect().size / 2.0

@@ -32,17 +32,17 @@ func _ready() -> void:
 	spike_ball.queue_free()
 	robot.queue_free()
 	
-	# Test 3: Inverted controls at 500 score (testing threshold)
+	# Test 3: Inverted controls at 750 score
 	GameState.start_game()
 	assert(not GameState.are_controls_inverted, "Controls must not be inverted initially")
 	
 	var warning_flag = [false]
 	GameState.controls_inverted_warning_started.connect(func(): warning_flag[0] = true)
 	
-	GameState.update_score(505)
-	assert(warning_flag[0], "controls_inverted_warning_started signal must fire at 500 score")
-	assert(GameState.controls_warning_active, "3-second disclaimer must be active at 500 score")
-	print("✓ 500 score triggers 3-second disclaimer and social credit siren (testing threshold)")
+	GameState.update_score(755)
+	assert(warning_flag[0], "controls_inverted_warning_started signal must fire at 750 score")
+	assert(GameState.controls_warning_active, "3-second disclaimer must be active at 750 score")
+	print("✓ 750 score triggers 3-second disclaimer and social credit siren")
 	
 	# Test 4: Falling abyss death with mixkit falling scream
 	assert(GameState.sfx_falling_scream != null, "falling_scream.mp3 must be loaded in GameState")
@@ -101,9 +101,9 @@ func _ready() -> void:
 	add_child(main_node)
 	var spawner = main_node.get_node("Spawner")
 	
-	# Verify that no spike balls spawn when score < 500
+	# Verify that no spike balls spawn when score < 300
 	GameState.score = 250
-	assert(GameState.score < 500, "Score is under 500 for testing")
+	assert(GameState.score < 300, "Score is under 300 for testing")
 	
 	# Verify _is_position_above_any_platform rejects positions above platforms
 	if spawner.active_platforms.size() > 0:
@@ -130,10 +130,10 @@ func _ready() -> void:
 			assert(absf(pos2.x - 380.0) >= 80.0, "Spike must maintain at least 80px breathing room from target platform")
 			assert(not spawner._is_position_above_any_platform(pos2.x, pos2.y), "Spike position must NEVER be above any platform")
 			
-	print("✓ Natural jump path free of spikes, score >= 500 gating, and zero platforms underneath verified")
+	print("✓ Natural jump path free of spikes, score >= 300 gating, and zero platforms underneath verified")
 	main_node.queue_free()
 	
-	# Test 10: Drunk Buff at 750 score with 3s warning, sound, and Linear craft palette
+	# Test 10: Drunk Buff at 500 score with 3s warning, sound, and Linear craft palette
 	assert(GameState.sfx_drunk != null, "drunk.mp3 must be loaded in GameState")
 	GameState.start_game()
 	assert(not GameState.reached_drunk, "reached_drunk must be false initially")
@@ -143,9 +143,9 @@ func _ready() -> void:
 	var drunk_warning_fired = [false]
 	GameState.drunk_warning_started.connect(func(): drunk_warning_fired[0] = true)
 	
-	# Score 750 triggers drunk warning
-	GameState.update_score(755)
-	assert(drunk_warning_fired[0], "drunk_warning_started signal must fire at 750 score")
+	# Score 500 triggers drunk warning
+	GameState.update_score(505)
+	assert(drunk_warning_fired[0], "drunk_warning_started signal must fire at 500 score")
 	assert(GameState.drunk_warning_active, "drunk_warning_active must be true during 3s warning")
 	assert(GameState.reached_drunk, "reached_drunk must be set to true")
 	
@@ -162,9 +162,9 @@ func _ready() -> void:
 	# Verify craft palette integrity (Linear / Vercel obsidian and twilight)
 	assert(GameState.COLOR_SCHEMES[0]["bg"] == Color("08090c"), "Color scheme 0 must be obsidian void")
 	assert(GameState.COLOR_SCHEMES[3]["bg"] == Color("0f0a1c"), "Color scheme 3 (750-999) must be twilight violet")
-	print("✓ Drunk buff at 750 score, 3s warning, 1.10x bounce boost, and craft obsidian palette verified")
+	print("✓ Drunk buff at 500 score, 3s warning, 1.10x bounce boost, and craft obsidian palette verified")
 	
-	# Test 11: Non-intrusive compact HUD warning, 5s inverted duration & Biome Ascent
+	# Test 11: Non-intrusive compact HUD warning, 5s inverted duration & static handmade background
 	var hud_scene = preload("res://scenes/HUD.tscn")
 	var hud_inst = hud_scene.instantiate()
 	add_child(hud_inst)
@@ -174,20 +174,20 @@ func _ready() -> void:
 	assert(banner.offset_top == 80.0, "DisclaimerBanner must be at top (offset_top = 80)")
 	assert(banner.offset_right - banner.offset_left <= 380.0, "DisclaimerBanner width must be compact (<= 380px)")
 	assert(banner.offset_bottom - banner.offset_top <= 65.0, "DisclaimerBanner height must be compact (<= 65px)")
-	print("✓ Disclaimer banner is compact and non-intrusive at the top (80px, 360x58px)")
+	print("✓ Disclaimer banner is compact and non-intrusive at the top (80px, 260x46px)")
 	hud_inst.queue_free()
 	
 	# Verify 5-second inverted controls duration constant
 	assert(GameState.INVERT_DURATION == 5.0, "Inverted controls duration must be 5.0 seconds")
 	print("✓ Inverted controls duration set to 5.0 seconds with live countdown")
 	
-	# Verify BiomeVisuals node in Main
+	# Verify BackgroundTexture node in Main
 	var main2 = preload("res://scenes/Main.tscn").instantiate()
 	add_child(main2)
-	var biome_node = main2.get_node_or_null("Background/BiomeVisuals")
-	assert(biome_node != null, "Main must contain Background/BiomeVisuals")
-	assert(biome_node is BiomeBackground, "BiomeVisuals must be an instance of BiomeBackground")
-	print("✓ Dynamic Biome Ascent background node verified in Main")
+	var bg_tex = main2.get_node_or_null("Background/BackgroundTexture")
+	assert(bg_tex != null, "Main must contain Background/BackgroundTexture")
+	assert(bg_tex is TextureRect, "BackgroundTexture must be an instance of TextureRect")
+	print("✓ Static handmade background texture node verified in Main")
 	main2.queue_free()
 	
 	print("--- ALL NEW FEATURE TESTS PASSED SUCCESSFULLY! ---\n")

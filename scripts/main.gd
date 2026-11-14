@@ -5,9 +5,12 @@ extends Node2D
 @onready var spawner: Node2D = $Spawner
 @onready var background_rect: ColorRect = $Background/PlayfieldRect if has_node("Background/PlayfieldRect") else $Background/ColorRect
 @onready var effects: Node2D = $Effects
+@onready var star_particles: CPUParticles2D = $Background/StarParticles if has_node("Background/StarParticles") else null
+@onready var star_particles_right: CPUParticles2D = $Background/StarParticlesRight if has_node("Background/StarParticlesRight") else null
 
 var can_restart: bool = false
 var start_y: float = 450.0
+var _last_particles_screen_size: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	GameState.start_game()
@@ -34,6 +37,32 @@ func _ready() -> void:
 	camera.global_position = Vector2(center_x, center_y)
 	robot.global_position = Vector2(center_x, center_y + 80.0)
 	start_y = robot.global_position.y
+	
+	get_tree().root.size_changed.connect(_update_star_particles_layout)
+	_update_star_particles_layout()
+
+func _process(_delta: float) -> void:
+	var curr_size = get_viewport_rect().size
+	if curr_size != _last_particles_screen_size:
+		_last_particles_screen_size = curr_size
+		_update_star_particles_layout()
+
+func _update_star_particles_layout() -> void:
+	var screen_size = get_viewport_rect().size
+	var center_y = screen_size.y / 2.0
+	var count = int(clampf(24.0 * (screen_size.x / 540.0), 20.0, 60.0))
+	
+	if star_particles and is_instance_valid(star_particles):
+		star_particles.visible = true
+		star_particles.position = Vector2(screen_size.x * 0.25, center_y)
+		star_particles.emission_rect_extents = Vector2(screen_size.x * 0.25, center_y)
+		star_particles.amount = count
+		
+	if star_particles_right and is_instance_valid(star_particles_right):
+		star_particles_right.visible = true
+		star_particles_right.position = Vector2(screen_size.x * 0.75, center_y)
+		star_particles_right.emission_rect_extents = Vector2(screen_size.x * 0.25, center_y)
+		star_particles_right.amount = count
 
 func _physics_process(_delta: float) -> void:
 	# Height-based score calculation

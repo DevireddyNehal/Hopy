@@ -7,9 +7,9 @@ const PlatformScript = preload("res://scripts/platform.gd")
 @export var spike_ball_scene: PackedScene
 @export var camera: Camera2D
 
-# Vertical gap limits: 125px - 175px (apex jump reach is 297px)
-const MIN_GAP_Y: float = 125.0
-const MAX_GAP_Y: float = 175.0
+# Vertical gap limits: 100px - 145px (apex jump reach is 297px - very forgiving)
+const MIN_GAP_Y: float = 100.0
+const MAX_GAP_Y: float = 145.0
 const BUFFER_AHEAD: float = 750.0
 const DESPAWN_OFFSET: float = 160.0
 
@@ -54,20 +54,20 @@ func _spawn_initial_platforms() -> void:
 	# 1. Guaranteed safe starter platform directly underneath the robot (generous runway)
 	var start_plat = _spawn_platform_at(Vector2(center_x, highest_spawned_y), PlatformScript.Type.NORMAL, Vector2(1.6, 1.0))
 	
-	# 2. Pre-spawn a lively trail of platforms climbing upward (10 platforms)
-	for i in range(10):
+	# 2. Pre-spawn a lively trail of platforms climbing upward (12 platforms)
+	for i in range(12):
 		_spawn_next_platform()
 
 func _spawn_next_platform() -> void:
 	platform_count += 1
 	var chosen_type = _pick_type()
 	
-	# Gap pacing based on platform type
+	# Gap pacing based on platform type (forgiving close gaps)
 	var gap = randf_range(MIN_GAP_Y, MAX_GAP_Y)
 	if chosen_type == PlatformScript.Type.CRUMBLE:
-		gap = randf_range(115.0, 145.0) # Faster rapid hops for crumbles
+		gap = randf_range(90.0, 120.0) # Gentle rapid hops for crumbles
 	elif chosen_type == PlatformScript.Type.RAINBOW:
-		gap = randf_range(140.0, 175.0)
+		gap = randf_range(115.0, 140.0)
 	highest_spawned_y -= gap
 	
 	var screen_w = get_viewport_rect().size.x
@@ -78,57 +78,49 @@ func _spawn_next_platform() -> void:
 	# --- Strategic Placement Patterns ---
 	var spawn_x: float = center_biased_placement(screen_w, min_x, max_x)
 	
-	# --- Strategic Sizing (Progressively smaller at higher scores) ---
+	# --- Generous Platform Sizing ---
 	var plat_scale = Vector2(1.0, 1.0)
 	var diff = clampf(float(GameState.score) / 1000.0, 0.0, 1.0)
 	if platform_count > 6:
 		var size_roll = randf()
-		if size_roll < 0.25 + (diff * 0.25):
-			# Compact Precision Ledge (~64px wide)
-			plat_scale = Vector2(0.72, 1.0)
-		elif size_roll < 0.60 + (diff * 0.20):
-			# Agile Ledge (~75px wide)
-			plat_scale = Vector2(0.85, 1.0)
+		if size_roll < 0.15 + (diff * 0.15):
+			# Mildly compact (~95px wide)
+			plat_scale = Vector2(0.95, 1.0)
+		elif size_roll < 0.40:
+			# Extra generous ledge (~115px wide)
+			plat_scale = Vector2(1.10, 1.0)
 		else:
-			# Standard Ledge (~88px wide)
+			# Standard (~104px wide)
 			plat_scale = Vector2(1.0, 1.0)
 	
 	# --- GUARANTEED REACH RULE FOR SPIKES ---
-	# Spikes MUST NEVER be in the middle of platforms or on the player's natural path!
-	# The SAFE platform is placed at spawn_x (the natural destination), while the Thorn
-	# hazard is placed on the opposite flank with generous clearance (>= 130px).
 	if chosen_type == PlatformScript.Type.THORN:
 		# 1. Spawn guaranteed safe companion platform at spawn_x (natural path target)
-		var safe_type = PlatformScript.Type.MOVING if randf() < 0.45 else PlatformScript.Type.NORMAL
+		var safe_type = PlatformScript.Type.MOVING if randf() < 0.35 else PlatformScript.Type.NORMAL
 		_spawn_platform_at(Vector2(spawn_x, highest_spawned_y), safe_type, plat_scale)
 		
 		# 2. Spawn Thorn hazard obstacle on opposite flank leaving wide breathing room
 		var thorn_x: float
 		if spawn_x < center:
-			thorn_x = randf_range(center + 55.0, max_x)
+			thorn_x = randf_range(center + 65.0, max_x)
 		else:
-			thorn_x = randf_range(min_x, center - 55.0)
+			thorn_x = randf_range(min_x, center - 65.0)
 			
-		if absf(thorn_x - spawn_x) < 130.0:
-			thorn_x = (center + 115.0) if spawn_x < center else (center - 115.0)
+		if absf(thorn_x - spawn_x) < 140.0:
+			thorn_x = (center + 120.0) if spawn_x < center else (center - 120.0)
 			
 		_spawn_platform_at(Vector2(thorn_x, highest_spawned_y), PlatformScript.Type.THORN, plat_scale)
-		
-		# Next platform upward is calculated from the SAFE platform position!
 		last_x = spawn_x
 	else:
 		_spawn_platform_at(Vector2(spawn_x, highest_spawned_y), chosen_type, plat_scale)
 		last_x = spawn_x
 		
-	# --- Floating Spike Ball Hazard Spawn ---
-	# ONLY spawn after score >= 500 (user request: reduce bomb so it comes after 500)
-	# Spaced out with at least 4 platforms between spawns to reduce bomb density.
-	# NEVER spawn in the middle of platforms or in the vertical airspace above any platform!
-	if GameState.score >= 500 and chosen_type != PlatformScript.Type.THORN and spike_ball_scene:
+	# --- Floating Spike Ball Hazard Spawn (Active from 300 onwards) ---
+	if GameState.score >= 300 and chosen_type != PlatformScript.Type.THORN and spike_ball_scene:
 		platforms_since_last_spike += 1
-		var diff_after_500 = clampf(float(GameState.score - 500) / 1000.0, 0.0, 1.0)
-		var spike_chance = 0.10 + (diff_after_500 * 0.08) # 10% -> 18%
-		if randf() < spike_chance and platforms_since_last_spike >= 4:
+		var diff_after_300 = clampf(float(GameState.score - 300) / 1000.0, 0.0, 1.0)
+		var spike_chance = 0.07 + (diff_after_300 * 0.04) # 7% -> 11%
+		if randf() < spike_chance and platforms_since_last_spike >= 5:
 			var ball_pos = _calculate_safe_hazard_position(last_x, spawn_x, highest_spawned_y, gap, screen_w, min_x, max_x)
 			if ball_pos != Vector2.ZERO:
 				_spawn_spike_ball_at(ball_pos)
@@ -167,13 +159,13 @@ func _pick_type() -> int:
 	if platform_count == 4:
 		return PlatformScript.Type.MOVING
 		
-	# Progressive difficulty: moving and crumble platforms become more frequent as score climbs
+	# Progressive difficulty: balanced and forgiving
 	var diff = clampf(float(GameState.score) / 1000.0, 0.0, 1.0)
 	var r = randf()
-	var moving_chance = 0.28 + (diff * 0.10) # 28% -> 38%
-	var crumble_chance = 0.18 + (diff * 0.08) # 18% -> 26%
-	var spring_chance = 0.12 # 12%
-	var thorn_chance = 0.08 + (diff * 0.04) # 8% -> 12%
+	var moving_chance = 0.18 + (diff * 0.06) # 18% -> 24%
+	var crumble_chance = 0.10 + (diff * 0.04) # 10% -> 14%
+	var spring_chance = 0.18 # 18% (more super bounces!)
+	var thorn_chance = (0.05 + (diff * 0.03)) if GameState.score >= 300 else 0.02 # Slightly increased from 300 onwards
 	var meme_chance = 0.06 # 6%
 	
 	if r < moving_chance:
