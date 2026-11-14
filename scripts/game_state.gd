@@ -42,21 +42,28 @@ func _ready() -> void:
 	_load_audio_and_data()
 	load_best_score()
 
+var bounce_sounds: Array[AudioStream] = []
+
 func _load_audio_and_data() -> void:
-	# "Hee-Hee!" is the default bounce sound!
+	bounce_sounds.clear()
+	# Sound 0: Michael Jackson "Hee-Hee!"
 	if ResourceLoader.exists("res://assets/audio/rainbow.mp3"):
-		sfx_bounce = load("res://assets/audio/rainbow.mp3")
-	elif ResourceLoader.exists("res://assets/audio/bounce.wav"):
-		sfx_bounce = load("res://assets/audio/bounce.wav")
-		
-	# Rainbow super-bounce
-	if ResourceLoader.exists("res://assets/audio/rainbow.mp3"):
-		sfx_rainbow = load("res://assets/audio/rainbow.mp3")
-	elif ResourceLoader.exists("res://assets/audio/bounce.wav"):
-		sfx_rainbow = load("res://assets/audio/bounce.wav")
-		
+		var s_mj = load("res://assets/audio/rainbow.mp3")
+		bounce_sounds.append(s_mj)
+		sfx_rainbow = s_mj
+	# Sound 1: Meme "Aaye!"
 	if ResourceLoader.exists("res://assets/audio/meme.mp3"):
-		sfx_meme = load("res://assets/audio/meme.mp3")
+		var s_aaye = load("res://assets/audio/meme.mp3")
+		bounce_sounds.append(s_aaye)
+		sfx_meme = s_aaye
+	# Sound 2: Clean Boing!
+	if ResourceLoader.exists("res://assets/audio/bounce.wav"):
+		var s_boing = load("res://assets/audio/bounce.wav")
+		bounce_sounds.append(s_boing)
+		
+	# Fallback default
+	if bounce_sounds.size() > 0:
+		sfx_bounce = bounce_sounds[0]
 		
 	# Load memes
 	if FileAccess.file_exists("res://data/meme_text.json"):
@@ -68,11 +75,20 @@ func _load_audio_and_data() -> void:
 			f.close()
 
 func play_bounce() -> void:
-	if not sfx_bounce:
+	if bounce_sounds.is_empty():
 		return
+		
+	# 1. Base sound shifts every 100 points (0-99: Hee-Hee, 100-199: Aaye, 200-299: Boing)
+	var sound_tier = int(score / 100) % bounce_sounds.size()
+	var chosen_stream: AudioStream = bounce_sounds[sound_tier]
+	
+	# 2. Random Surprise: 22% chance to drop in a random sound from the other sounds!
+	if randf() < 0.22 and bounce_sounds.size() > 1:
+		chosen_stream = bounce_sounds[randi() % bounce_sounds.size()]
+		
 	var p = AudioStreamPlayer.new()
-	p.stream = sfx_bounce
-	p.pitch_scale = clampf(1.0 + (combo * 0.05), 0.9, 2.3)
+	p.stream = chosen_stream
+	p.pitch_scale = clampf(1.0 + (combo * 0.05), 0.88, 2.3)
 	add_child(p)
 	p.play()
 	p.finished.connect(p.queue_free)
