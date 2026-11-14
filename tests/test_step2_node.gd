@@ -27,9 +27,9 @@ func _ready() -> void:
 	for i in range(1, spawner.active_platforms.size()):
 		var cur_y = spawner.active_platforms[i].global_position.y
 		var gap = prev_y - cur_y
-		assert(gap <= 190.0, "Platform vertical gap must not exceed max jump reach (228px). Found gap: " + str(gap))
+		assert(gap <= 180.0, "Platform vertical gap must not exceed max jump reach (289px). Found gap: " + str(gap))
 		prev_y = cur_y
-	print("✓ Platform procedural generation verified (all gaps reachable < 190px, apex is 228px)")
+	print("✓ Platform procedural generation verified (all gaps reachable < 180px, apex is 289px)")
 	
 	# 3. Test Thorn Platform instant death
 	var thorn_plat = load("res://scenes/Platform.tscn").instantiate()

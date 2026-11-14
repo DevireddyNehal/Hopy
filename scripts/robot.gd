@@ -4,8 +4,8 @@ class_name Robot
 signal bounced(power: float)
 
 @export var gravity: float = 1400.0
-@export var steer_speed: float = 520.0
-@export var bounce_velocity: float = -800.0
+@export var steer_speed: float = 650.0
+@export var bounce_velocity: float = -900.0
 
 @onready var sprite: Node2D = $Visuals
 @onready var effect_spawn_point: Marker2D = $EffectSpawnPoint

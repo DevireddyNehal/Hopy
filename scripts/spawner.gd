@@ -6,20 +6,22 @@ const PlatformScript = preload("res://scripts/platform.gd")
 @export var platform_scene: PackedScene
 @export var camera: Camera2D
 
-# Vertical gap limits: comfortable, open, with ample leeway
-const MIN_GAP_Y: float = 100.0
-const MAX_GAP_Y: float = 160.0
+# Vertical gap limits: 95px - 145px (apex is 289px, so you have 144px leeway!)
+const MIN_GAP_Y: float = 95.0
+const MAX_GAP_Y: float = 145.0
 const BUFFER_AHEAD: float = 1200.0
 const DESPAWN_OFFSET: float = 600.0
 
 var highest_spawned_y: float = 520.0
 var platform_count: int = 0
-var last_zone: int = 1 # 0: Left, 1: Center, 2: Right
+var last_x: float = 576.0
 var active_platforms: Array[StaticBody2D] = []
 
 func _ready() -> void:
 	if not platform_scene:
 		platform_scene = preload("res://scenes/Platform.tscn")
+	var screen_w = get_viewport_rect().size.x
+	last_x = screen_w / 2.0
 	# Initial seed platforms
 	_spawn_initial_platforms()
 
@@ -43,13 +45,14 @@ func _spawn_initial_platforms() -> void:
 	var center_y = screen_size.y / 2.0
 	
 	highest_spawned_y = center_y + 180.0
+	last_x = center_x
 	
 	# 1. Guaranteed first safe landing platform directly underneath the robot (2.5x wide!)
 	var start_plat = _spawn_platform_at(Vector2(center_x, highest_spawned_y), PlatformScript.Type.NORMAL)
 	if start_plat:
 		start_plat.scale = Vector2(2.5, 1.0)
 	
-	# 2. Pre-spawn an open, spacious trail of platforms climbing upward
+	# 2. Pre-spawn a trail of platforms climbing upward
 	for i in range(16):
 		_spawn_next_platform()
 
@@ -58,30 +61,29 @@ func _spawn_next_platform() -> void:
 	highest_spawned_y -= gap
 	
 	var screen_w = get_viewport_rect().size.x
+	var min_x = 90.0
+	var max_x = screen_w - 90.0
 	
-	# Rotate zones across Left, Center, Right so platforms are evenly spread:
-	var available_zones = [0, 1, 2]
-	available_zones.erase(last_zone)
-	var chosen_zone = available_zones[randi() % available_zones.size()]
-	last_zone = chosen_zone
+	# Guaranteed reach rule:
+	# Each platform is within +-340px of the last one.
+	# (With steer_speed=650 and air_time=1.28s, travel is 832px -> massive 492px leeway!)
+	var offset_x = randf_range(-340.0, 340.0)
+	if abs(offset_x) < 80.0:
+		offset_x = 100.0 if offset_x >= 0 else -100.0
+		
+	var spawn_x = last_x + offset_x
+	if spawn_x < min_x:
+		spawn_x = max_x - (min_x - spawn_x)
+	elif spawn_x > max_x:
+		spawn_x = min_x + (spawn_x - max_x)
+	last_x = spawn_x
 	
-	var spawn_x = _get_x_in_zone(chosen_zone, screen_w)
 	_spawn_platform_at(Vector2(spawn_x, highest_spawned_y), _pick_type())
 	
-	# 30% chance to spawn an alternate platform on the far side for route choice:
-	if randf() < 0.3:
-		var alt_zone = 2 if chosen_zone == 0 else 0
-		var alt_x = _get_x_in_zone(alt_zone, screen_w)
+	# 40% chance to spawn an alternate platform on the other side for route variety:
+	if randf() < 0.4:
+		var alt_x = fposmod(spawn_x + randf_range(400.0, screen_w - 400.0), screen_w - 180.0) + 90.0
 		_spawn_platform_at(Vector2(alt_x, highest_spawned_y + randf_range(-15.0, 15.0)), _pick_type())
-
-func _get_x_in_zone(zone: int, screen_w: float) -> float:
-	match zone:
-		0:
-			return randf_range(100.0, screen_w * 0.33)
-		1:
-			return randf_range(screen_w * 0.38, screen_w * 0.62)
-		_:
-			return randf_range(screen_w * 0.67, screen_w - 100.0)
 
 func _pick_type() -> int:
 	platform_count += 1

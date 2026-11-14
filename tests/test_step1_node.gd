@@ -11,14 +11,14 @@ func _ready() -> void:
 	
 	# 1. Test Initial Properties
 	assert(robot.gravity == 1400.0, "Gravity should be 1400.0")
-	assert(robot.steer_speed == 520.0, "Steer speed should be 520.0")
-	assert(robot.bounce_velocity == -800.0, "Bounce velocity should be -800.0")
-	print("✓ Robot properties verified (Gravity 1400, Speed 520, Bounce -800)")
+	assert(robot.steer_speed == 650.0, "Steer speed should be 650.0")
+	assert(robot.bounce_velocity == -900.0, "Bounce velocity should be -900.0")
+	print("✓ Robot properties verified (Gravity 1400, Speed 650, Bounce -900)")
 	
 	# 2. Test Bounce & Combo
 	var initial_combo = GameState.combo
 	robot.bounce()
-	assert(robot.velocity.y == -800.0, "Bounce must set velocity.y to bounce_velocity (-800.0)")
+	assert(robot.velocity.y == -900.0, "Bounce must set velocity.y to bounce_velocity (-900.0)")
 	assert(GameState.combo == initial_combo + 1, "Bounce must increment GameState combo")
 	print("✓ Robot bounce sets vertical velocity and increments combo")
 	
