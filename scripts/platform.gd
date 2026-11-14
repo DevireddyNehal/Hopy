@@ -42,9 +42,10 @@ func _ready() -> void:
 	if ResourceLoader.exists("res://assets/sprites/crumble_broken.png"):
 		crumble_broken_texture = load("res://assets/sprites/crumble_broken.png")
 	apply_type_style()
-	left_limit = 95.0
-	right_limit = get_viewport_rect().size.x - 95.0
-	# Randomize moving platform start direction
+	left_limit = 85.0
+	right_limit = get_viewport_rect().size.x - 85.0
+	# Randomize moving platform speed and start direction
+	move_speed = randf_range(170.0, 245.0)
 	if randf() > 0.5:
 		move_direction = -1.0
 
@@ -64,21 +65,21 @@ func apply_type_style() -> void:
 		
 	if platform_type == Type.THORN and thorn_texture:
 		sprite.texture = thorn_texture
-		sprite.scale = Vector2(0.42, 0.42)
+		sprite.scale = Vector2(0.25, 0.25)
 		sprite.modulate = Color.WHITE
 		if spikes:
 			spikes.visible = false
 		return
 	elif platform_type == Type.RAINBOW and spring_texture:
 		sprite.texture = spring_texture
-		sprite.scale = Vector2(0.55, 0.55)
+		sprite.scale = Vector2(0.50, 0.50)
 		sprite.modulate = Color.WHITE
 		if spikes:
 			spikes.visible = false
 		return
 	elif default_texture:
 		sprite.texture = default_texture
-		sprite.scale = Vector2(0.32, 0.32)
+		sprite.scale = Vector2(0.185, 0.22)
 
 	# Toggle fallback polygon spikes for THORN if no texture
 	if spikes:

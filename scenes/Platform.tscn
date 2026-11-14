@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/platform.png" id="2_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_platform"]
-size = Vector2(150, 24)
+size = Vector2(88, 20)
 
 [node name="Platform" type="StaticBody2D" groups=["platforms"]]
 collision_layer = 2
@@ -19,7 +19,7 @@ one_way_collision_margin = 10.0
 [node name="Visuals" type="Node2D" parent="."]
 
 [node name="Sprite2D" type="Sprite2D" parent="Visuals"]
-scale = Vector2(0.32, 0.32)
+scale = Vector2(0.185, 0.22)
 texture = ExtResource("2_tex")
 
 [node name="Spikes" type="Node2D" parent="Visuals"]
@@ -27,16 +27,12 @@ visible = false
 
 [node name="Spike1" type="Polygon2D" parent="Visuals/Spikes"]
 color = Color(1, 0.15, 0.15, 1)
-polygon = PackedVector2Array(-50, -12, -40, -26, -30, -12)
+polygon = PackedVector2Array(-36, -10, -26, -22, -16, -10)
 
 [node name="Spike2" type="Polygon2D" parent="Visuals/Spikes"]
 color = Color(1, 0.15, 0.15, 1)
-polygon = PackedVector2Array(-20, -12, -10, -26, 0, -12)
+polygon = PackedVector2Array(-10, -10, 0, -22, 10, -10)
 
 [node name="Spike3" type="Polygon2D" parent="Visuals/Spikes"]
 color = Color(1, 0.15, 0.15, 1)
-polygon = PackedVector2Array(10, -12, 20, -26, 30, -12)
-
-[node name="Spike4" type="Polygon2D" parent="Visuals/Spikes"]
-color = Color(1, 0.15, 0.15, 1)
-polygon = PackedVector2Array(35, -12, 45, -26, 55, -12)
+polygon = PackedVector2Array(16, -10, 26, -22, 36, -10)
