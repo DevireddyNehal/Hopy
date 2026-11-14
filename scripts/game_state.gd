@@ -43,10 +43,18 @@ func _ready() -> void:
 	load_best_score()
 
 func _load_audio_and_data() -> void:
-	if ResourceLoader.exists("res://assets/audio/bounce.wav"):
+	# "Hee-Hee!" is the default bounce sound!
+	if ResourceLoader.exists("res://assets/audio/rainbow.mp3"):
+		sfx_bounce = load("res://assets/audio/rainbow.mp3")
+	elif ResourceLoader.exists("res://assets/audio/bounce.wav"):
 		sfx_bounce = load("res://assets/audio/bounce.wav")
+		
+	# Rainbow super-bounce
 	if ResourceLoader.exists("res://assets/audio/rainbow.mp3"):
 		sfx_rainbow = load("res://assets/audio/rainbow.mp3")
+	elif ResourceLoader.exists("res://assets/audio/bounce.wav"):
+		sfx_rainbow = load("res://assets/audio/bounce.wav")
+		
 	if ResourceLoader.exists("res://assets/audio/meme.mp3"):
 		sfx_meme = load("res://assets/audio/meme.mp3")
 		
@@ -64,7 +72,7 @@ func play_bounce() -> void:
 		return
 	var p = AudioStreamPlayer.new()
 	p.stream = sfx_bounce
-	p.pitch_scale = clampf(1.0 + (combo * 0.04), 0.95, 2.2)
+	p.pitch_scale = clampf(1.0 + (combo * 0.05), 0.9, 2.3)
 	add_child(p)
 	p.play()
 	p.finished.connect(p.queue_free)
@@ -74,6 +82,7 @@ func play_rainbow() -> void:
 		return
 	var p = AudioStreamPlayer.new()
 	p.stream = sfx_rainbow
+	p.pitch_scale = 1.35 # Extra high-pitched super Hee-Hee!
 	add_child(p)
 	p.play()
 	p.finished.connect(p.queue_free)
