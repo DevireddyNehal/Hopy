@@ -17,6 +17,8 @@ var color_scheme_index: int = 0
 
 var reached_500: bool = false
 var reached_1000: bool = false
+const INVERT_CONTROLS_THRESHOLD: int = 500 # TEMPORARY: Set to 500 for testing per user request (revert to 1000 later)
+var reached_invert_controls: bool = false
 var is_game_active: bool = false
 
 const BEST_SCORE_PATH: String = "user://best.txt"
@@ -287,6 +289,7 @@ func start_game() -> void:
 	color_scheme_index = 0
 	reached_500 = false
 	reached_1000 = false
+	reached_invert_controls = false
 	are_controls_inverted = false
 	controls_warning_active = false
 	is_game_active = true
@@ -310,6 +313,10 @@ func update_score(new_score: int) -> void:
 		if score >= 1000 and not reached_1000:
 			reached_1000 = true
 			milestone_reached.emit(1000)
+			
+		# Inverted controls check (temporarily 500 for testing, revert to 1000 later)
+		if score >= INVERT_CONTROLS_THRESHOLD and not reached_invert_controls:
+			reached_invert_controls = true
 			_trigger_inverted_controls_sequence()
 			
 		# Check color scheme transitions (every 250 points)
