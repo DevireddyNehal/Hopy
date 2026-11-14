@@ -62,12 +62,30 @@ func _spawn_next_platform() -> void:
 	platform_count += 1
 	var chosen_type = _pick_type()
 	
-	# Gap pacing based on platform type (forgiving close gaps)
+	# Determine if this platform step will spawn a floating circle spike ball
+	var will_spawn_spike: bool = false
+	if GameState.score >= 200 and chosen_type != PlatformScript.Type.THORN and spike_ball_scene:
+		if platforms_since_last_spike >= 2:
+			var spike_chance: float
+			if GameState.score >= 500:
+				var diff_after_500 = clampf(float(GameState.score - 500) / 1000.0, 0.0, 1.0)
+				spike_chance = 0.42 + (diff_after_500 * 0.15) # 42% -> 57%
+			else:
+				var diff_after_200 = clampf(float(GameState.score - 200) / 300.0, 0.0, 1.0)
+				spike_chance = 0.30 + (diff_after_200 * 0.12) # 30% -> 42%
+			if randf() < spike_chance:
+				will_spawn_spike = true
+	
+	# Gap pacing based on platform type (forgiving close gaps):
+	# When spawning a floating circle spike, provide extra headroom (160 - 175px)
+	# so the spike sits high up in the middle with ample space below to maneuver.
 	var gap = randf_range(MIN_GAP_Y, MAX_GAP_Y)
 	if chosen_type == PlatformScript.Type.CRUMBLE:
 		gap = randf_range(90.0, 120.0) # Gentle rapid hops for crumbles
 	elif chosen_type == PlatformScript.Type.RAINBOW:
 		gap = randf_range(115.0, 140.0)
+	elif will_spawn_spike:
+		gap = randf_range(160.0, 175.0)
 	highest_spawned_y -= gap
 	
 	var screen_w = get_viewport_rect().size.x
@@ -127,25 +145,19 @@ func _spawn_next_platform() -> void:
 		last_x = spawn_x
 		
 	# --- Floating Spike Ball Hazard Spawn (Active from 200 onwards) ---
-	if GameState.score >= 200 and chosen_type != PlatformScript.Type.THORN and spike_ball_scene:
-		platforms_since_last_spike += 1
-		var spike_chance: float
-		if GameState.score >= 500:
-			var diff_after_500 = clampf(float(GameState.score - 500) / 1000.0, 0.0, 1.0)
-			spike_chance = 0.42 + (diff_after_500 * 0.15) # 42% -> 57%
+	if will_spawn_spike:
+		var ball_pos = _calculate_safe_hazard_position(last_x, spawn_x, highest_spawned_y, gap, screen_w, min_x, max_x)
+		if ball_pos != Vector2.ZERO:
+			var sb = _spawn_spike_ball_at(ball_pos)
+			# Movable floating spikes past 500 score: 40% patrol horizontally!
+			if GameState.score >= 500 and randf() < 0.40:
+				sb.horizontal_speed = randf_range(45.0, 75.0)
+				sb.horizontal_range = randf_range(40.0, 75.0)
+			platforms_since_last_spike = 0
 		else:
-			var diff_after_200 = clampf(float(GameState.score - 200) / 300.0, 0.0, 1.0)
-			spike_chance = 0.30 + (diff_after_200 * 0.12) # 30% -> 42%
-			
-		if randf() < spike_chance and platforms_since_last_spike >= 2:
-			var ball_pos = _calculate_safe_hazard_position(last_x, spawn_x, highest_spawned_y, gap, screen_w, min_x, max_x)
-			if ball_pos != Vector2.ZERO:
-				var sb = _spawn_spike_ball_at(ball_pos)
-				# Movable floating spikes past 500 score: 40% patrol horizontally!
-				if GameState.score >= 500 and randf() < 0.40:
-					sb.horizontal_speed = randf_range(45.0, 75.0)
-					sb.horizontal_range = randf_range(40.0, 75.0)
-				platforms_since_last_spike = 0
+			platforms_since_last_spike += 1
+	elif GameState.score >= 200:
+		platforms_since_last_spike += 1
 
 ## Cyclic wave pacing for erratic "fake-normal" platforms that look solid then suddenly juke away.
 ## Oscillates endlessly between "Really Common" (~44% chance) and "Uncommon" (~7% chance) in waves.
@@ -254,8 +266,8 @@ func _is_position_above_any_platform(cand_x: float, cand_y: float) -> bool:
 					return true
 			else:
 				var half_w = 44.0 * absf(plat.scale.x)
-				# 85px clearance ensures zero overlap with platform's vertical column
-				if absf(cand_x - plat_x) < half_w + 45.0:
+				# 70px clearance ensures zero overlap with platform's vertical column
+				if absf(cand_x - plat_x) < half_w + 25.0:
 					return true
 	return false
 
@@ -264,57 +276,40 @@ func _calculate_safe_hazard_position(from_x: float, to_x: float, top_y: float, g
 	var playfield_left = center - 270.0
 	var playfield_right = center + 270.0
 	
-	# Determine horizontal jump direction:
-	var jumping_right = to_x > from_x + 35.0
-	var jumping_left = to_x < from_x - 35.0
+	# Place the spike high up in the gap, leaving generous headroom underneath to jump & maneuver
+	var ball_y = top_y + (gap * 0.28)
 	
-	# Natural jump corridor to protect completely:
-	var corridor_min = minf(from_x, to_x) - 55.0
-	var corridor_max = maxf(from_x, to_x) + 55.0
-	
-	# Build priority candidate positions
+	# Build prioritized candidates:
+	# Priority 1: High and in the middle between takeoff (from_x) and landing (to_x)
+	var mid_x = (from_x + to_x) / 2.0
 	var candidates: Array[Vector2] = []
-	var ball_y = top_y + (gap * 0.45)
 	
-	if jumping_right:
-		# 1. Outer right overshoot flank (past to_x towards the right wall)
-		var right_flank_x = clampf(to_x + randf_range(95.0, 125.0), to_x + 90.0, playfield_right - 35.0)
-		candidates.append(Vector2(right_flank_x, ball_y))
-		
-		# 2. Far left wall margin (behind takeoff)
-		var left_margin_x = playfield_left + randf_range(30.0, 48.0)
-		candidates.append(Vector2(left_margin_x, ball_y))
-		
-		# 3. Outer right wall margin
-		var right_margin_x = playfield_right - randf_range(30.0, 48.0)
-		candidates.append(Vector2(right_margin_x, ball_y))
-	elif jumping_left:
-		# 1. Outer left overshoot flank (past to_x towards the left wall)
-		var left_flank_x = clampf(to_x - randf_range(95.0, 125.0), playfield_left + 35.0, to_x - 90.0)
-		candidates.append(Vector2(left_flank_x, ball_y))
-		
-		# 2. Far right wall margin (behind takeoff)
-		var right_margin_x = playfield_right - randf_range(30.0, 48.0)
-		candidates.append(Vector2(right_margin_x, ball_y))
-		
-		# 3. Outer left wall margin
-		var left_margin_x = playfield_left + randf_range(30.0, 48.0)
-		candidates.append(Vector2(left_margin_x, ball_y))
-	else:
-		# Vertical corridor jump
-		if to_x < center:
-			candidates.append(Vector2(playfield_right - 40.0, ball_y))
-			candidates.append(Vector2(randf_range(center + 85.0, max_x), ball_y))
-		else:
-			candidates.append(Vector2(playfield_left + 40.0, ball_y))
-			candidates.append(Vector2(randf_range(min_x, center - 85.0), ball_y))
-			
-	# Test candidates: MUST NOT be above any platform AND MUST NOT be in natural corridor
+	# 1. Exact middle between platforms
+	candidates.append(Vector2(mid_x, ball_y))
+	# 2. Slight offsets around the middle
+	candidates.append(Vector2(mid_x + 25.0, ball_y))
+	candidates.append(Vector2(mid_x - 25.0, ball_y))
+	# 3. Center corridor of screen
+	candidates.append(Vector2(center, ball_y))
+	candidates.append(Vector2(center - 35.0, ball_y))
+	candidates.append(Vector2(center + 35.0, ball_y))
+	# 4. Flank fallbacks (in case the middle has another platform directly underneath)
+	candidates.append(Vector2(to_x + 95.0, ball_y))
+	candidates.append(Vector2(to_x - 95.0, ball_y))
+	candidates.append(Vector2(from_x + 90.0, ball_y))
+	candidates.append(Vector2(from_x - 90.0, ball_y))
+	
 	for cand in candidates:
-		if cand.x >= corridor_min and cand.x <= corridor_max:
+		# Keep within screen playfield bounds
+		if cand.x < playfield_left + 40.0 or cand.x > playfield_right - 40.0:
 			continue
-		if absf(cand.x - to_x) < 85.0 or absf(cand.x - from_x) < 85.0:
+		# Must NOT be directly on top of the target (upper) platform
+		if absf(cand.x - to_x) < 55.0:
 			continue
+		# Must NOT be directly on top of the takeoff (lower) platform
+		if absf(cand.x - from_x) < 55.0:
+			continue
+		# Must NOT be directly on top of ANY platform below it
 		if _is_position_above_any_platform(cand.x, cand.y):
 			continue
 		return cand

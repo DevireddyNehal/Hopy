@@ -122,25 +122,35 @@ func _ready() -> void:
 		var directly_above_y = sample_plat.global_position.y - 60.0
 		assert(spawner._is_position_above_any_platform(directly_above_x, directly_above_y), "Must detect and reject positions directly above platforms")
 	
-	# Test left-to-right jump (from 350 to 580)
+	# Test left-to-right jump (from 350 to 580) with clear middle
+	var saved_platforms = spawner.active_platforms.duplicate()
+	spawner.active_platforms.clear()
+	
 	for i in range(10):
 		var pos = spawner._calculate_safe_hazard_position(350.0, 580.0, 300.0, 150.0, 960.0, 290.0, 670.0)
 		if pos != Vector2.ZERO:
-			var inside_corridor = pos.x > 350.0 and pos.x < 580.0
-			assert(not inside_corridor, "Spike must NEVER be placed in the middle of platforms along the natural path")
-			assert(absf(pos.x - 580.0) >= 80.0, "Spike must maintain at least 80px breathing room from target platform")
-			assert(not spawner._is_position_above_any_platform(pos.x, pos.y), "Spike position must NEVER be above any platform")
+			assert(pos.x >= 350.0 and pos.x <= 580.0, "Spike should spawn in the middle between platforms")
+			assert(absf(pos.x - 580.0) >= 50.0, "Spike must not be directly on top of target platform")
+			assert(absf(pos.x - 350.0) >= 50.0, "Spike must not be directly on top of takeoff platform")
+			assert(pos.y <= 300.0 + (150.0 * 0.35), "Spike must be positioned high in the gap to leave room below")
 			
-	# Test right-to-left jump (from 600 to 380)
+	# Test right-to-left jump (from 600 to 380) with clear middle
 	for i in range(10):
 		var pos2 = spawner._calculate_safe_hazard_position(600.0, 380.0, 300.0, 150.0, 960.0, 290.0, 670.0)
 		if pos2 != Vector2.ZERO:
-			var inside_corridor2 = pos2.x > 380.0 and pos2.x < 600.0
-			assert(not inside_corridor2, "Spike must NEVER be placed in the middle of platforms along right-to-left natural path")
-			assert(absf(pos2.x - 380.0) >= 80.0, "Spike must maintain at least 80px breathing room from target platform")
-			assert(not spawner._is_position_above_any_platform(pos2.x, pos2.y), "Spike position must NEVER be above any platform")
+			assert(pos2.x >= 380.0 and pos2.x <= 600.0, "Spike should spawn in the middle between platforms")
+			assert(absf(pos2.x - 600.0) >= 50.0, "Spike must not be directly on top of target platform")
+			assert(absf(pos2.x - 380.0) >= 50.0, "Spike must not be directly on top of takeoff platform")
+			assert(pos2.y <= 300.0 + (150.0 * 0.35), "Spike must be positioned high in the gap to leave room below")
 			
-	print("✓ Natural jump path free of spikes, score >= 200 gating, and zero platforms underneath verified")
+	# Restore active platforms and verify spike never spawns directly above any platform
+	spawner.active_platforms = saved_platforms
+	for i in range(10):
+		var safe_test_pos = spawner._calculate_safe_hazard_position(350.0, 580.0, 300.0, 150.0, 960.0, 290.0, 670.0)
+		if safe_test_pos != Vector2.ZERO:
+			assert(not spawner._is_position_above_any_platform(safe_test_pos.x, safe_test_pos.y), "Spike position must NEVER be above any platform")
+			
+	print("✓ Middle high spike ball placement, score >= 200 gating, and zero platforms underneath verified")
 	main_node.queue_free()
 	
 	# Test 10: Drunk Buff at 500 score with 3s warning, sound, and Linear craft palette
