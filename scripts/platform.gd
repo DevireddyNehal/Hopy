@@ -43,9 +43,9 @@ func _ready() -> void:
 		crumble_broken_texture = load("res://assets/sprites/crumble_broken.png")
 	apply_type_style()
 	left_limit = 85.0
-	right_limit = get_viewport_rect().size.x - 85.0
-	# Randomize moving platform speed and start direction
-	move_speed = randf_range(170.0, 245.0)
+	# Randomize moving platform speed scaled progressively with score
+	var diff = clampf(float(GameState.score) / 1000.0, 0.0, 1.0)
+	move_speed = randf_range(170.0 + (diff * 50.0), 245.0 + (diff * 75.0))
 	if randf() > 0.5:
 		move_direction = -1.0
 
@@ -112,16 +112,18 @@ func on_robot_landed(robot: CharacterBody2D) -> void:
 			robot.bounce(1.0)
 			
 		Type.RAINBOW:
-			# 1.5x Super bounce + MJ Hee-Hee sound + 360 flip + confetti!
+			# 1.5x Super bounce + MJ Hee-Hee sound + 360 flip + confetti + spring camera shake!
 			robot.bounce(1.5)
 			GameState.play_rainbow()
 			GameState.trigger_effect(&"confetti", global_position)
 			GameState.trigger_effect(&"flip")
+			GameState.trigger_effect(&"spring_shake")
 			
 		Type.THORN:
 			# Thorn platform kills immediately!
 			GameState.trigger_effect(&"shatter", global_position)
 			GameState.trigger_effect(&"screen_flash", Color(1.0, 0.15, 0.15, 0.6))
+			GameState.trigger_effect(&"shake", 16.0)
 			if robot.has_method("die"):
 				robot.die()
 			else:
@@ -129,6 +131,7 @@ func on_robot_landed(robot: CharacterBody2D) -> void:
 				
 		Type.CRUMBLE:
 			robot.bounce(1.0)
+			GameState.trigger_effect(&"shake", 4.0)
 			# Breaks after 0.15s
 			is_broken = true
 			_trigger_crumble()

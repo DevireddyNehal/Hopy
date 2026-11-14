@@ -28,11 +28,26 @@ func _ready() -> void:
 	velocity.y = bounce_velocity
 	_play_squash_and_stretch()
 
+func get_effective_gravity() -> float:
+	var diff = clampf(float(GameState.score) / 1000.0, 0.0, 1.0)
+	return gravity + (diff * 280.0)
+
+func get_effective_steer_speed() -> float:
+	var diff = clampf(float(GameState.score) / 1000.0, 0.0, 1.0)
+	return steer_speed + (diff * 180.0)
+
+func get_effective_bounce_velocity() -> float:
+	var diff = clampf(float(GameState.score) / 1000.0, 0.0, 1.0)
+	if diff <= 0.0:
+		return bounce_velocity
+	var eff_g = get_effective_gravity()
+	return -sqrt(2.0 * eff_g * 297.0)
+
 func _physics_process(delta: float) -> void:
 	if is_dead:
 		return
-	# 1. Apply gravity
-	velocity.y += gravity * delta
+	# 1. Apply progressive gravity
+	velocity.y += get_effective_gravity() * delta
 	
 	# Thruster flame lights up when rocketing upward!
 	if thruster:
@@ -40,7 +55,7 @@ func _physics_process(delta: float) -> void:
 	
 	# 2. Horizontal steering via ui_left and ui_right (Left/Right arrows and A/D)
 	var direction = Input.get_axis("ui_left", "ui_right")
-	velocity.x = direction * steer_speed * steer_multiplier
+	velocity.x = direction * get_effective_steer_speed() * steer_multiplier
 	
 	# Slight tilt animation for steering feedback
 	if direction != 0:
@@ -83,27 +98,29 @@ func die() -> void:
 		return
 	is_dead = true
 	velocity = Vector2.ZERO
-	# Quick death spin & drop
+	# Quick death spin & drop + heavy screen shake
 	var tween = create_tween()
 	tween.tween_property(sprite, "rotation", PI * 2, 0.4)
 	tween.parallel().tween_property(sprite, "scale", Vector2.ZERO, 0.4)
 	GameState.trigger_effect(&"screen_flash", Color(1.0, 0.2, 0.2, 0.5))
+	GameState.trigger_effect(&"shake", 14.0)
 	GameState.end_game()
 
 func bounce(multiplier: float = 1.0) -> void:
 	if is_dead:
 		return
 	current_bounce_multiplier = multiplier
-	velocity.y = bounce_velocity * current_bounce_multiplier
+	velocity.y = get_effective_bounce_velocity() * current_bounce_multiplier
 	
 	# Notify GameState combo tracker & audio
 	GameState.increment_combo()
 	GameState.play_bounce()
 	bounced.emit(current_bounce_multiplier)
 	
-	# Visual landing effects: sparkles at feet + character pulse
+	# Visual landing effects: sparkles at feet + character pulse + subtle camera micro-shake
 	GameState.trigger_effect(&"sparkle", global_position + Vector2(0, 16))
 	GameState.trigger_effect(&"pulse")
+	GameState.trigger_effect(&"bounce_shake")
 	
 	# Quick squash & stretch bounce animation
 	_play_squash_and_stretch()

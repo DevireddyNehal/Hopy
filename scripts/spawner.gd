@@ -6,7 +6,7 @@ const PlatformScript = preload("res://scripts/platform.gd")
 @export var platform_scene: PackedScene
 @export var camera: Camera2D
 
-# Vertical gap limits: 120px - 175px (apex is 297px with v=-960 and g=1550)
+# Vertical gap limits: 125px - 175px (apex jump reach is 297px)
 const MIN_GAP_Y: float = 125.0
 const MAX_GAP_Y: float = 175.0
 const BUFFER_AHEAD: float = 750.0
@@ -71,23 +71,46 @@ func _spawn_next_platform() -> void:
 	
 	# --- Strategic Placement Patterns ---
 	var spawn_x: float = center_biased_placement(screen_w, min_x, max_x)
-	last_x = spawn_x
 	
-	# --- Strategic Sizing (Smaller platforms & precision ledges) ---
+	# --- Strategic Sizing (Progressively smaller at higher scores) ---
 	var plat_scale = Vector2(1.0, 1.0)
-	if platform_count > 8:
+	var diff = clampf(float(GameState.score) / 1000.0, 0.0, 1.0)
+	if platform_count > 6:
 		var size_roll = randf()
-		if size_roll < 0.35:
-			# Compact Precision Ledge (~66px wide)
-			plat_scale = Vector2(0.75, 1.0)
-		elif size_roll < 0.65:
+		if size_roll < 0.25 + (diff * 0.25):
+			# Compact Precision Ledge (~64px wide)
+			plat_scale = Vector2(0.72, 1.0)
+		elif size_roll < 0.60 + (diff * 0.20):
 			# Agile Ledge (~75px wide)
 			plat_scale = Vector2(0.85, 1.0)
 		else:
 			# Standard Ledge (~88px wide)
 			plat_scale = Vector2(1.0, 1.0)
 	
-	_spawn_platform_at(Vector2(spawn_x, highest_spawned_y), chosen_type, plat_scale)
+	# --- GUARANTEED REACH RULE FOR SPIKES ---
+	# Spikes MUST NEVER be counted as the sole valid platform for upward traversal!
+	# If a spike hazard is chosen, spawn the spike as an obstacle AND spawn a guaranteed
+	# safe platform on the other side of the tier, setting last_x to the safe platform.
+	if chosen_type == PlatformScript.Type.THORN:
+		# 1. Spawn the Thorn hazard obstacle
+		_spawn_platform_at(Vector2(spawn_x, highest_spawned_y), PlatformScript.Type.THORN, plat_scale)
+		
+		# 2. Spawn guaranteed safe companion platform on opposite side
+		var safe_x: float
+		var center = screen_w / 2.0
+		if spawn_x < center:
+			safe_x = randf_range(center + 35.0, max_x)
+		else:
+			safe_x = randf_range(min_x, center - 35.0)
+			
+		var safe_type = PlatformScript.Type.MOVING if randf() < 0.45 else PlatformScript.Type.NORMAL
+		_spawn_platform_at(Vector2(safe_x, highest_spawned_y), safe_type, plat_scale)
+		
+		# The NEXT platform upward is calculated strictly from the SAFE platform position!
+		last_x = safe_x
+	else:
+		_spawn_platform_at(Vector2(spawn_x, highest_spawned_y), chosen_type, plat_scale)
+		last_x = spawn_x
 
 func center_biased_placement(screen_w: float, min_x: float, max_x: float) -> float:
 	var pattern_roll = randf()
@@ -122,25 +145,26 @@ func _pick_type() -> int:
 	if platform_count == 4:
 		return PlatformScript.Type.MOVING
 		
-	# Beyond platform 4: High stakes & heavy dynamic variety (68% specials!)
+	# Progressive difficulty: moving and crumble platforms become more frequent as score climbs
+	var diff = clampf(float(GameState.score) / 1000.0, 0.0, 1.0)
 	var r = randf()
-	if r < 0.30:
-		# 30% MOVING: sliding platforms patrol and sweep horizontally
+	var moving_chance = 0.28 + (diff * 0.10) # 28% -> 38%
+	var crumble_chance = 0.18 + (diff * 0.08) # 18% -> 26%
+	var spring_chance = 0.12 # 12%
+	var thorn_chance = 0.08 + (diff * 0.04) # 8% -> 12%
+	var meme_chance = 0.06 # 6%
+	
+	if r < moving_chance:
 		return PlatformScript.Type.MOVING
-	elif r < 0.48:
-		# 18% CRUMBLE: single-use breakaway platforms prevent camping
+	elif r < moving_chance + crumble_chance:
 		return PlatformScript.Type.CRUMBLE
-	elif r < 0.60:
-		# 12% RAINBOW / SPRING: thrilling 1.5x super-bounce rockets
+	elif r < moving_chance + crumble_chance + spring_chance:
 		return PlatformScript.Type.RAINBOW
-	elif r < 0.68:
-		# 8% THORN HAZARDS: must steer around and dodge!
+	elif r < moving_chance + crumble_chance + spring_chance + thorn_chance:
 		return PlatformScript.Type.THORN
-	elif r < 0.75:
-		# 7% MEME: sound bite & popup
+	elif r < moving_chance + crumble_chance + spring_chance + thorn_chance + meme_chance:
 		return PlatformScript.Type.MEME
 	else:
-		# 25% NORMAL: solid rest platforms
 		return PlatformScript.Type.NORMAL
 
 func _spawn_platform_at(pos: Vector2, type: int, custom_scale: Vector2 = Vector2.ONE) -> StaticBody2D:
