@@ -1,0 +1,70 @@
+extends CharacterBody2D
+class_name Robot
+
+signal bounced(power: float)
+
+@export var gravity: float = 1400.0
+@export var steer_speed: float = 320.0
+@export var bounce_velocity: float = -700.0
+
+@onready var sprite: Node2D = $Visuals
+@onready var effect_spawn_point: Marker2D = $EffectSpawnPoint
+
+# Screen boundaries (Viewport is 1152 x 648)
+const SCREEN_WIDTH: float = 1152.0
+const HALF_WIDTH: float = 16.0 # half robot width for clean wrapping
+
+# Multiplier applied when special platforms (like Rainbow) boost the bounce
+var current_bounce_multiplier: float = 1.0
+
+# Steering multiplier (can be slowed by Glitch platform)
+var steer_multiplier: float = 1.0
+
+func _physics_process(delta: float) -> void:
+	# 1. Apply gravity
+	velocity.y += gravity * delta
+	
+	# 2. Horizontal steering via ui_left and ui_right (Left/Right arrows and A/D)
+	var direction = Input.get_axis("ui_left", "ui_right")
+	velocity.x = direction * steer_speed * steer_multiplier
+	
+	# Slight tilt animation for steering feedback
+	if direction != 0:
+		sprite.rotation = lerp_angle(sprite.rotation, direction * 0.15, 0.2)
+	else:
+		sprite.rotation = lerp_angle(sprite.rotation, 0.0, 0.2)
+	
+	# Save pre-slide vertical velocity to detect downward impact
+	var was_falling = velocity.y >= 0.0
+	
+	# 3. Move with physics
+	move_and_slide()
+	
+	# 4. Auto-bounce when landing on a floor/platform while falling
+	if is_on_floor() and was_falling:
+		bounce()
+	
+	# 5. Screen boundary handling:
+	# Choice: SCREEN WRAPPING. Exiting the left edge wraps the robot to the right edge,
+	# and exiting the right edge wraps the robot to the left edge.
+	if position.x < -HALF_WIDTH:
+		position.x = SCREEN_WIDTH + HALF_WIDTH
+	elif position.x > SCREEN_WIDTH + HALF_WIDTH:
+		position.x = -HALF_WIDTH
+
+func bounce(multiplier: float = 1.0) -> void:
+	current_bounce_multiplier = multiplier
+	velocity.y = bounce_velocity * current_bounce_multiplier
+	
+	# Notify GameState combo tracker
+	GameState.increment_combo()
+	bounced.emit(current_bounce_multiplier)
+	
+	# Quick squash & stretch bounce animation
+	_play_squash_and_stretch()
+
+func _play_squash_and_stretch() -> void:
+	var tween = create_tween()
+	tween.tween_property(sprite, "scale", Vector2(1.3, 0.7), 0.05)
+	tween.tween_property(sprite, "scale", Vector2(0.85, 1.15), 0.1)
+	tween.tween_property(sprite, "scale", Vector2(1.0, 1.0), 0.1)

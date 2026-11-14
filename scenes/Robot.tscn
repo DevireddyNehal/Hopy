@@ -1,0 +1,48 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/robot.gd" id="1_robot"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_robot"]
+size = Vector2(28, 30)
+
+[node name="Robot" type="CharacterBody2D"]
+collision_layer = 1
+collision_mask = 2
+script = ExtResource("1_robot")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -1)
+shape = SubResource("RectangleShape2D_robot")
+
+[node name="Visuals" type="Node2D" parent="."]
+
+[node name="Body" type="ColorRect" parent="Visuals"]
+offset_left = -16.0
+offset_top = -16.0
+offset_right = 16.0
+offset_bottom = 16.0
+color = Color(0.12, 0.75, 1, 1)
+
+[node name="EyeLeft" type="ColorRect" parent="Visuals"]
+offset_left = -10.0
+offset_top = -8.0
+offset_right = -4.0
+offset_bottom = -2.0
+color = Color(1, 1, 1, 1)
+
+[node name="EyeRight" type="ColorRect" parent="Visuals"]
+offset_left = 4.0
+offset_top = -8.0
+offset_right = 10.0
+offset_bottom = -2.0
+color = Color(1, 1, 1, 1)
+
+[node name="Antenna" type="ColorRect" parent="Visuals"]
+offset_left = -2.0
+offset_top = -22.0
+offset_right = 2.0
+offset_bottom = -16.0
+color = Color(1, 0.85, 0.2, 1)
+
+[node name="EffectSpawnPoint" type="Marker2D" parent="."]
+position = Vector2(0, 16)
