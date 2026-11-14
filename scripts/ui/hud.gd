@@ -44,13 +44,22 @@ func _on_combo_changed(new_combo: int) -> void:
 		
 	if new_combo > 1:
 		combo_container.visible = true
-		combo_label.text = "×" + str(new_combo) + " COMBO!"
+		if new_combo >= 10:
+			combo_label.text = "⚡ ×" + str(new_combo) + " HYPER COMBO! ⚡"
+			combo_label.modulate = Color("ff007f")
+		elif new_combo >= 5:
+			combo_label.text = "★ ×" + str(new_combo) + " SUPER COMBO! ★"
+			combo_label.modulate = Color("ffb300")
+		else:
+			combo_label.text = "×" + str(new_combo) + " COMBO!"
+			combo_label.modulate = Color("00f0ff")
 		
 		# Punchy pop animation on increment
 		var tween = create_tween()
 		combo_label.pivot_offset = combo_label.size / 2.0
-		combo_label.scale = Vector2(1.4, 1.4)
-		tween.tween_property(combo_label, "scale", Vector2(1.0, 1.0), 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		combo_label.scale = Vector2(1.35, 1.35)
+		tween.tween_property(combo_label, "scale", Vector2(1.0, 1.0), 0.14)\
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	else:
 		combo_container.visible = false
 

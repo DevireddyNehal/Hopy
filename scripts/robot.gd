@@ -9,8 +9,9 @@ signal bounced(power: float)
 
 @onready var sprite: Node2D = $Visuals
 @onready var effect_spawn_point: Marker2D = $EffectSpawnPoint
+@onready var thruster: Polygon2D = $Visuals/ThrusterFlame
 
-const HALF_WIDTH: float = 16.0 # half robot width for clean wrapping
+const HALF_WIDTH: float = 18.0 # half robot width for clean wrapping
 
 # Multiplier applied when special platforms (like Rainbow) boost the bounce
 var current_bounce_multiplier: float = 1.0
@@ -29,6 +30,10 @@ func _physics_process(delta: float) -> void:
 		return
 	# 1. Apply gravity
 	velocity.y += gravity * delta
+	
+	# Thruster flame lights up when rocketing upward!
+	if thruster:
+		thruster.visible = (velocity.y < -120.0)
 	
 	# 2. Horizontal steering via ui_left and ui_right (Left/Right arrows and A/D)
 	var direction = Input.get_axis("ui_left", "ui_right")

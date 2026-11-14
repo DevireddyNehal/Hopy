@@ -6,11 +6,11 @@ const PlatformScript = preload("res://scripts/platform.gd")
 @export var platform_scene: PackedScene
 @export var camera: Camera2D
 
-# Vertical gap limits: 95px - 145px (apex is 289px, so you have 144px leeway!)
-const MIN_GAP_Y: float = 95.0
-const MAX_GAP_Y: float = 145.0
-const BUFFER_AHEAD: float = 1200.0
-const DESPAWN_OFFSET: float = 600.0
+# Vertical gap limits: 135px - 180px (apex is 289px, so you have 109px-154px clean leeway!)
+const MIN_GAP_Y: float = 135.0
+const MAX_GAP_Y: float = 180.0
+const BUFFER_AHEAD: float = 650.0
+const DESPAWN_OFFSET: float = 150.0
 
 var highest_spawned_y: float = 520.0
 var platform_count: int = 0
@@ -30,7 +30,7 @@ func _physics_process(_delta: float) -> void:
 		return
 		
 	var half_h = get_viewport_rect().size.y / 2.0
-	# 1. Spawn ahead of camera
+	# 1. Spawn ahead of camera (spacious buffer)
 	var camera_top = camera.global_position.y - half_h
 	while highest_spawned_y > camera_top - BUFFER_AHEAD:
 		_spawn_next_platform()
@@ -52,8 +52,8 @@ func _spawn_initial_platforms() -> void:
 	if start_plat:
 		start_plat.scale = Vector2(2.5, 1.0)
 	
-	# 2. Pre-spawn a trail of platforms climbing upward
-	for i in range(16):
+	# 2. Pre-spawn a clean trail of platforms climbing upward (9 platforms for initial view)
+	for i in range(9):
 		_spawn_next_platform()
 
 func _spawn_next_platform() -> void:
@@ -61,29 +61,19 @@ func _spawn_next_platform() -> void:
 	highest_spawned_y -= gap
 	
 	var screen_w = get_viewport_rect().size.x
-	var min_x = 90.0
-	var max_x = screen_w - 90.0
+	var min_x = 100.0
+	var max_x = screen_w - 100.0
 	
 	# Guaranteed reach rule:
-	# Each platform is within +-340px of the last one.
-	# (With steer_speed=650 and air_time=1.28s, travel is 832px -> massive 492px leeway!)
-	var offset_x = randf_range(-340.0, 340.0)
-	if abs(offset_x) < 80.0:
-		offset_x = 100.0 if offset_x >= 0 else -100.0
+	# Single, clear platform per tier within +-300px of the last one.
+	var offset_x = randf_range(-300.0, 300.0)
+	if abs(offset_x) < 70.0:
+		offset_x = 90.0 if offset_x >= 0 else -90.0
 		
-	var spawn_x = last_x + offset_x
-	if spawn_x < min_x:
-		spawn_x = max_x - (min_x - spawn_x)
-	elif spawn_x > max_x:
-		spawn_x = min_x + (spawn_x - max_x)
+	var spawn_x = clampf(last_x + offset_x, min_x, max_x)
 	last_x = spawn_x
 	
 	_spawn_platform_at(Vector2(spawn_x, highest_spawned_y), _pick_type())
-	
-	# 40% chance to spawn an alternate platform on the other side for route variety:
-	if randf() < 0.4:
-		var alt_x = fposmod(spawn_x + randf_range(400.0, screen_w - 400.0), screen_w - 180.0) + 90.0
-		_spawn_platform_at(Vector2(alt_x, highest_spawned_y + randf_range(-15.0, 15.0)), _pick_type())
 
 func _pick_type() -> int:
 	platform_count += 1

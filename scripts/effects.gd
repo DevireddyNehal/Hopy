@@ -5,7 +5,7 @@ extends Node2D
 ## All effects are purely cosmetic and non-blocking (< 0.4s or gentle drift).
 ## They never alter player collision or control response.
 
-const MAX_ACTIVE_PARTICLES: int = 400
+const MAX_ACTIVE_PARTICLES: int = 120
 const LANDING_COOLDOWN_MSEC: int = 40
 
 const PIXEL_PATTERNS = [
@@ -137,56 +137,56 @@ func trigger(effect_type: StringName, extra_data: Variant = null) -> void:
 			flash_screen(Color(1.0, 0.84, 0.0, 0.45), 0.35)
 
 ## Short burst of glowing sparks around the landing point (< 0.4s)
-func spawn_sparkle_burst(world_pos: Vector2, count: int = 14) -> void:
+func spawn_sparkle_burst(world_pos: Vector2, count: int = 7) -> void:
 	for i in range(count):
 		var angle: float = randf() * TAU
-		var speed: float = randf_range(90.0, 260.0)
+		var speed: float = randf_range(80.0, 200.0)
 		var particle := _make_particle(world_pos, Vector2(cos(angle), sin(angle)) * speed,
-			randf_range(0.25, 0.45), SPARK_COLORS[randi() % SPARK_COLORS.size()],
-			randf_range(2.0, 3.5), Particle.SHAPE_CIRCLE)
+			randf_range(0.2, 0.35), SPARK_COLORS[randi() % SPARK_COLORS.size()],
+			randf_range(2.0, 3.0), Particle.SHAPE_CIRCLE)
 		if particle == null:
 			break
-		particle.gravity = 180.0
+		particle.gravity = 140.0
 
 ## Pixel-style hearts, stars, bolts that rise then fade
-func spawn_pixel_emoji(world_pos: Vector2, count: int = 5, life: float = 1.0) -> void:
+func spawn_pixel_emoji(world_pos: Vector2, count: int = 4, life: float = 0.85) -> void:
 	for i in range(count):
 		var particle := _make_particle(world_pos,
-			Vector2(randf_range(-100.0, 100.0), randf_range(-280.0, -180.0)),
+			Vector2(randf_range(-90.0, 90.0), randf_range(-240.0, -150.0)),
 			life * randf_range(0.7, 1.0),
 			PIXEL_COLORS[randi() % PIXEL_COLORS.size()],
 			2.5, Particle.SHAPE_PIXEL)
 		if particle == null:
 			break
 		particle.pattern = PIXEL_PATTERNS[randi() % PIXEL_PATTERNS.size()]
-		particle.gravity = 450.0
-		particle.spin = randf_range(-2.5, 2.5)
+		particle.gravity = 400.0
+		particle.spin = randf_range(-2.0, 2.0)
 
 ## Confetti for celebrations and rainbow platform
-func spawn_confetti(world_pos: Vector2, count: int = 35, life: float = 1.2) -> void:
+func spawn_confetti(world_pos: Vector2, count: int = 22, life: float = 1.0) -> void:
 	for i in range(count):
 		var particle := _make_particle(world_pos,
-			Vector2(randf_range(-240.0, 240.0), randf_range(-380.0, -160.0)),
+			Vector2(randf_range(-200.0, 200.0), randf_range(-340.0, -140.0)),
 			life * randf_range(0.7, 1.0),
 			CONFETTI_COLORS[randi() % CONFETTI_COLORS.size()],
-			3.5, Particle.SHAPE_CONFETTI)
-		if particle == null:
-			break
-		particle.gravity = 650.0
-		particle.spin = randf_range(-10.0, 10.0)
-
-## Shards that fly out when a crumble platform breaks
-func spawn_shatter(world_pos: Vector2, count: int = 12) -> void:
-	for i in range(count):
-		var particle := _make_particle(world_pos,
-			Vector2(randf_range(-180.0, 180.0), randf_range(-220.0, -50.0)),
-			randf_range(0.3, 0.5),
-			SHATTER_COLORS[randi() % SHATTER_COLORS.size()],
-			3.5, Particle.SHAPE_SQUARE)
+			3.0, Particle.SHAPE_CONFETTI)
 		if particle == null:
 			break
 		particle.gravity = 600.0
 		particle.spin = randf_range(-8.0, 8.0)
+
+## Shards that fly out when a crumble platform breaks
+func spawn_shatter(world_pos: Vector2, count: int = 8) -> void:
+	for i in range(count):
+		var particle := _make_particle(world_pos,
+			Vector2(randf_range(-160.0, 160.0), randf_range(-180.0, -40.0)),
+			randf_range(0.25, 0.45),
+			SHATTER_COLORS[randi() % SHATTER_COLORS.size()],
+			3.0, Particle.SHAPE_SQUARE)
+		if particle == null:
+			break
+		particle.gravity = 550.0
+		particle.spin = randf_range(-6.0, 6.0)
 
 ## Flash character tint briefly on landing/bounce (< 0.18s)
 func pulse_character(flash: Color = Color(1.5, 1.5, 1.5, 1.0), duration: float = 0.16) -> void:

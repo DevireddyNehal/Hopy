@@ -74,6 +74,24 @@ func _load_audio_and_data() -> void:
 			if json.parse(f.get_as_text()) == OK and json.data is Array:
 				meme_list = json.data
 			f.close()
+	_setup_sfx_pool()
+
+var sfx_pool: Array[AudioStreamPlayer] = []
+var sfx_pool_index: int = 0
+const SFX_POOL_SIZE: int = 6
+
+func _setup_sfx_pool() -> void:
+	for i in range(SFX_POOL_SIZE):
+		var p = AudioStreamPlayer.new()
+		add_child(p)
+		sfx_pool.append(p)
+
+func _get_sfx_player() -> AudioStreamPlayer:
+	if sfx_pool.is_empty():
+		_setup_sfx_pool()
+	var p = sfx_pool[sfx_pool_index]
+	sfx_pool_index = (sfx_pool_index + 1) % sfx_pool.size()
+	return p
 
 func play_bounce() -> void:
 	if bounce_sounds.is_empty():
@@ -87,31 +105,26 @@ func play_bounce() -> void:
 	if randf() < 0.22 and bounce_sounds.size() > 1:
 		chosen_stream = bounce_sounds[randi() % bounce_sounds.size()]
 		
-	var p = AudioStreamPlayer.new()
+	var p = _get_sfx_player()
 	p.stream = chosen_stream
 	p.pitch_scale = clampf(1.0 + (combo * 0.05), 0.88, 2.3)
-	add_child(p)
 	p.play()
-	p.finished.connect(p.queue_free)
 
 func play_rainbow() -> void:
 	if not sfx_rainbow:
 		return
-	var p = AudioStreamPlayer.new()
+	var p = _get_sfx_player()
 	p.stream = sfx_rainbow
-	p.pitch_scale = 1.35 # Extra high-pitched super Hee-Hee!
-	add_child(p)
+	p.pitch_scale = 1.35
 	p.play()
-	p.finished.connect(p.queue_free)
 
 func play_meme() -> void:
 	if not sfx_meme:
 		return
-	var p = AudioStreamPlayer.new()
+	var p = _get_sfx_player()
 	p.stream = sfx_meme
-	add_child(p)
+	p.pitch_scale = 1.0
 	p.play()
-	p.finished.connect(p.queue_free)
 
 func trigger_meme() -> void:
 	play_meme()

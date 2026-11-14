@@ -31,7 +31,9 @@ var thorn_texture: Texture2D
 func _ready() -> void:
 	if sprite:
 		default_texture = sprite.texture
-	if ResourceLoader.exists("res://assets/sprites/red_spike_platform.svg"):
+	if ResourceLoader.exists("res://assets/sprites/red_spike_platform.png"):
+		thorn_texture = load("res://assets/sprites/red_spike_platform.png")
+	elif ResourceLoader.exists("res://assets/sprites/red_spike_platform.svg"):
 		thorn_texture = load("res://assets/sprites/red_spike_platform.svg")
 	apply_type_style()
 	right_limit = get_viewport_rect().size.x - 100.0
