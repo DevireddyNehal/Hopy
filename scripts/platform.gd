@@ -110,7 +110,7 @@ func _on_landing_sensor_body_entered(body: Node2D) -> void:
 	if not PlayerAdapter.is_player(body):
 		return
 	var player := body as CharacterBody2D
-	if player.velocity.y <= 0.0:
+	if player.velocity.y <= 0.0 and not player.is_on_floor():
 		return
 	if kind == Kind.CRUMBLE and _crumble_started:
 		return

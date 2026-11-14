@@ -1,5 +1,14 @@
 # TheGame
 
+## Playable loop
+
+The project starts at `scenes/Main.tscn`. Select **START** (or press Space),
+move with A/D or the arrow keys, and press Esc to pause. The player wraps at
+the screen edges, bounces from generated platforms, and scores by reaching new
+heights. Rainbow, glitch, crumble, moving, and meme platforms are included in
+the platform pool. The HUD, pause menu, and game-over screen are assembled by
+their matching UI scripts.
+
 ## Effects manager
 
 Instance `scenes/Effects.tscn` as a child of the world node that contains the

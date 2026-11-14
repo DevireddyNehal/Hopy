@@ -5,6 +5,7 @@ extends Node
 
 const PLATFORM_SCENE: PackedScene = preload("res://scenes/Platform.tscn")
 const EFFECTS_SCENE: PackedScene = preload("res://scenes/Effects.tscn")
+const MAIN_SCENE: PackedScene = preload("res://scenes/Main.tscn")
 const EPSILON: float = 0.001
 
 var _passed: int = 0
@@ -61,6 +62,7 @@ func run_all() -> void:
 	await test_glitch_overlay_exists_and_toggles()
 	await test_rainbow_trail_starts_and_expires()
 	await test_trigger_accepts_missing_position()
+	await test_main_scene_game_flow()
 
 
 func _check(condition: bool, label: String) -> void:
@@ -323,3 +325,29 @@ func test_trigger_accepts_missing_position() -> void:
 	effects.trigger(&"glitch")
 	_check(true, "pulse, flip, and glitch accept an omitted position")
 	await _cleanup([effects])
+
+
+func test_main_scene_game_flow() -> void:
+	print("Main scene game flow")
+	var main: Node = MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	_check(main.get_node_or_null("UILayer/TitleScreen") != null, "main scene opens on the title screen")
+
+	main.call("_start_game")
+	await get_tree().process_frame
+	var run: Node = main.get_node_or_null("World/Run")
+	_check(GameState.is_game_active, "starting the run activates GameState")
+	_check(run != null and run.get_node_or_null("Player") != null, "starting the run adds the player")
+	_check(run != null and run.get_child_count() >= 4, "starting the run creates platforms and effects")
+
+	main.call("_open_pause_screen")
+	_check(get_tree().paused, "pause action pauses the scene tree")
+	main.call("_resume_game")
+	_check(not get_tree().paused, "resume action unpauses the scene tree")
+
+	main.call("_return_to_title")
+	await get_tree().process_frame
+	_check(not GameState.is_game_active, "returning to title ends the run")
+	_check(main.get_node_or_null("UILayer/TitleScreen") != null, "returning to title shows the title screen")
+	await _cleanup([main])
