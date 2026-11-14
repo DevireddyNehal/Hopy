@@ -97,7 +97,10 @@ func _spawn_next_platform() -> void:
 	if chosen_type == PlatformScript.Type.THORN:
 		# 1. Spawn guaranteed safe companion platform at spawn_x (natural path target)
 		var safe_type = PlatformScript.Type.MOVING if randf() < 0.35 else PlatformScript.Type.NORMAL
-		_spawn_platform_at(Vector2(spawn_x, highest_spawned_y), safe_type, plat_scale)
+		var safe_plat = _spawn_platform_at(Vector2(spawn_x, highest_spawned_y), safe_type, plat_scale)
+		if safe_type == PlatformScript.Type.NORMAL and platform_count > 4:
+			if randf() < _get_erratic_platform_chance():
+				safe_plat.is_erratic = true
 		
 		# 2. Spawn Thorn hazard obstacle on opposite flank leaving wide breathing room
 		var thorn_x: float
@@ -109,10 +112,18 @@ func _spawn_next_platform() -> void:
 		if absf(thorn_x - spawn_x) < 140.0:
 			thorn_x = (center + 120.0) if spawn_x < center else (center - 120.0)
 			
-		_spawn_platform_at(Vector2(thorn_x, highest_spawned_y), PlatformScript.Type.THORN, plat_scale)
+		var thorn_plat = _spawn_platform_at(Vector2(thorn_x, highest_spawned_y), PlatformScript.Type.THORN, plat_scale)
+		# Movable spikes past 500 score: 45% patrol horizontally!
+		if GameState.score >= 500 and randf() < 0.45:
+			thorn_plat.is_moving_thorn = true
+			thorn_plat.move_speed = randf_range(80.0, 130.0)
 		last_x = spawn_x
 	else:
-		_spawn_platform_at(Vector2(spawn_x, highest_spawned_y), chosen_type, plat_scale)
+		var plat = _spawn_platform_at(Vector2(spawn_x, highest_spawned_y), chosen_type, plat_scale)
+		# Erratic normal platforms: look solid then suddenly juke away when approached
+		if chosen_type == PlatformScript.Type.NORMAL and platform_count > 4:
+			if randf() < _get_erratic_platform_chance():
+				plat.is_erratic = true
 		last_x = spawn_x
 		
 	# --- Floating Spike Ball Hazard Spawn (Active from 300 onwards) ---
@@ -123,8 +134,21 @@ func _spawn_next_platform() -> void:
 		if randf() < spike_chance and platforms_since_last_spike >= 3:
 			var ball_pos = _calculate_safe_hazard_position(last_x, spawn_x, highest_spawned_y, gap, screen_w, min_x, max_x)
 			if ball_pos != Vector2.ZERO:
-				_spawn_spike_ball_at(ball_pos)
+				var sb = _spawn_spike_ball_at(ball_pos)
+				# Movable floating spikes past 500 score: 40% patrol horizontally!
+				if GameState.score >= 500 and randf() < 0.40:
+					sb.horizontal_speed = randf_range(45.0, 75.0)
+					sb.horizontal_range = randf_range(40.0, 75.0)
 				platforms_since_last_spike = 0
+
+## Cyclic wave pacing for erratic "fake-normal" platforms that look solid then suddenly juke away.
+## Oscillates endlessly between "Really Common" (~44% chance) and "Uncommon" (~7% chance) in waves.
+func _get_erratic_platform_chance() -> float:
+	var wave = sin(float(GameState.score) * 0.024)
+	if wave >= 0.0:
+		return 0.44 # Hot wave: really common
+	else:
+		return 0.07 # Cold wave: uncommon
 
 func center_biased_placement(screen_w: float, min_x: float, max_x: float) -> float:
 	var pattern_roll = randf()
@@ -162,11 +186,23 @@ func _pick_type() -> int:
 	# Progressive difficulty: balanced and forgiving
 	var diff = clampf(float(GameState.score) / 1000.0, 0.0, 1.0)
 	var r = randf()
-	var moving_chance = 0.18 + (diff * 0.06) # 18% -> 24%
-	var crumble_chance = 0.10 + (diff * 0.04) # 10% -> 14%
-	var spring_chance = 0.18 # 18% (more super bounces!)
-	var thorn_chance = (0.05 + (diff * 0.03)) if GameState.score >= 300 else 0.02 # Slightly increased from 300 onwards
-	var meme_chance = 0.06 # 6%
+	var moving_chance = 0.18 + (diff * 0.04) # 18% -> 22%
+	var crumble_chance = 0.10 + (diff * 0.03) # 10% -> 13%
+	var spring_chance = 0.16 # 16% (super bounces)
+	
+	# Spiked platform frequency:
+	# - Under 300: 2%
+	# - 300 to 499: 6% - 8%
+	# - 500+ score: significantly increased to 18% - 25% for high-stakes climbing
+	var thorn_chance: float
+	if GameState.score >= 500:
+		thorn_chance = 0.18 + (diff * 0.07) # 18% -> 25% past 500 score
+	elif GameState.score >= 300:
+		thorn_chance = 0.06 + (diff * 0.02) # 6% -> 8%
+	else:
+		thorn_chance = 0.02 # 2%
+		
+	var meme_chance = 0.05 # 5%
 	
 	if r < moving_chance:
 		return PlatformScript.Type.MOVING

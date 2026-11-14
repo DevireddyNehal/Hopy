@@ -27,6 +27,7 @@ var last_bounce_time: float = -10.0
 var drunk_timer: float = 0.0
 
 func _ready() -> void:
+	add_to_group("robot")
 	# Initialize base scale
 	sprite.scale = BASE_SCALE
 	# Launch upward on start/restart like classic Doodle Jump!
@@ -103,14 +104,18 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	
 	# 4. Auto-bounce when touching any platform while falling or at jump apex (forgiving edges & non-level contacts)
-	var can_bounce = (was_falling or velocity.y >= -60.0) and not is_dead and not is_falling_death
+	var can_bounce = (was_falling or velocity.y >= -20.0) and not is_dead and not is_falling_death
 	if can_bounce:
 		for i in get_slide_collision_count():
 			var collision = get_slide_collision(i)
 			var collider = collision.get_collider()
 			if collider and collider.has_method("on_robot_landed"):
-				collider.on_robot_landed(self)
-				break
+				var plat_scale_y = absf(collider.scale.y) if "scale" in collider else 1.0
+				var plat_base = collider.global_position.y + (10.0 * plat_scale_y)
+				# Only trigger landing if robot's stomach or higher is at or above the platform base line
+				if global_position.y <= plat_base:
+					collider.on_robot_landed(self)
+					break
 	
 	# 5. Screen boundary handling (wrapping):
 	var center_x = get_viewport_rect().size.x / 2.0

@@ -9,20 +9,28 @@ extends CanvasLayer
 
 var death_lines: Dictionary = {
 	"low": [
-		"It's just a game, bro. Can't be that hard.",
+		"Bro didn't even leave the launch pad.",
+		"Gravity: 1, You: 0.",
 		"Bro didn't even try.",
-		"Gravity: 1, You: 0."
-	],
-	"mid": [
-		"Skill issue.",
-		"Bro fell off.",
-		"Almost cooked, but burned.",
+		"It's literally just jumping, bro.",
+		"Did you play with your eyes closed?",
 		"L + ratio + fell down."
 	],
+	"mid": [
+		"500 points? Barely made it past the tutorial.",
+		"Skill issue. Not even close to 1500.",
+		"Bro thought 500 was impressive.",
+		"Mid gameplay. Try using two hands next time.",
+		"Bro fell off right when it mattered.",
+		"You survived the warmup, then immediately folded.",
+		"Choked before reaching a real score."
+	],
 	"high": [
-		"Okay, not bad. Touch grass anyway.",
-		"Certified hopper.",
-		"You were cooking till the slip."
+		"Okay, now you're cooking! Certified hopper.",
+		"1500+ score! Absolute cosmic menace.",
+		"Gigachad jump mechanics. Touch grass anyway.",
+		"Legitimate gamer detected. Insane height!",
+		"Respect earned. You actually reached the stratosphere."
 	]
 }
 
@@ -63,12 +71,17 @@ func _on_game_over() -> void:
 	best_label.text = "BEST: " + str(best_score)
 	new_best_label.visible = is_new_best
 	
-	# Pick tiered roast
+	# Pick tiered roast based on score:
+	# < 500: Low tier
+	# 500 - 1499: Mid / low-middle tier (no praise, strictly roasting)
+	# >= 1500: High tier (praised)
 	var tier_key = "mid"
-	if final_score < 100:
+	if final_score < 500:
 		tier_key = "low"
-	elif final_score >= 500:
+	elif final_score >= 1500:
 		tier_key = "high"
+	else:
+		tier_key = "mid"
 		
 	var pool = death_lines.get(tier_key, ["Skill issue."])
 	if pool.size() > 0:

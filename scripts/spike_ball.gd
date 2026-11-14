@@ -4,20 +4,35 @@ class_name FloatingSpikeBall
 @export var bob_amplitude: float = 14.0
 @export var bob_speed: float = 3.2
 @export var rotate_speed: float = 2.4
+@export var horizontal_speed: float = 0.0
+@export var horizontal_range: float = 60.0
 
 var _initial_y: float = 0.0
+var _initial_x: float = 0.0
+var _patrol_dir: float = 1.0
 var _time: float = 0.0
 
 @onready var visuals: Node2D = $Visuals
 
 func _ready() -> void:
 	_initial_y = position.y
+	_initial_x = position.x
 	_time = randf_range(0.0, TAU)
+	if randf() > 0.5:
+		_patrol_dir = -1.0
 	body_entered.connect(_on_body_entered)
 
 func _physics_process(delta: float) -> void:
 	_time += delta * bob_speed
 	position.y = _initial_y + sin(_time) * bob_amplitude
+	if horizontal_speed > 0.0:
+		position.x += horizontal_speed * _patrol_dir * delta
+		if position.x > _initial_x + horizontal_range:
+			position.x = _initial_x + horizontal_range
+			_patrol_dir = -1.0
+		elif position.x < _initial_x - horizontal_range:
+			position.x = _initial_x - horizontal_range
+			_patrol_dir = 1.0
 	if visuals:
 		visuals.rotation += rotate_speed * delta
 

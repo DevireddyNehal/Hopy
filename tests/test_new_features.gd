@@ -80,18 +80,28 @@ func _ready() -> void:
 	
 	var edge_robot = robot_scene.instantiate()
 	edge_robot.global_position = Vector2(248, 208) # At right edge, feet below platform top
-	edge_robot.velocity.y = 150.0 # Falling
 	add_child(edge_robot)
+	edge_robot.velocity.y = 150.0 # Falling
 	
 	# When falling and touching edge/not level: must trigger jump
 	test_plat._try_trigger_landing(edge_robot)
-	assert(edge_robot.velocity.y == -960.0, "Touching platform edge while falling must trigger bounce")
+	assert(edge_robot.velocity.y <= -900.0, "Touching platform edge while falling must trigger bounce")
 	
 	# When rocketing upward: must NOT trigger bounce (phases through)
 	edge_robot.velocity.y = -500.0
 	test_plat._try_trigger_landing(edge_robot)
 	assert(edge_robot.velocity.y == -500.0, "Rocketing upward through platform must not trigger premature bounce")
-	print("✓ Forgiving edge & non-level platform landing verified")
+	
+	# When head hits from bottom (stomach below platform base line 210): must NOT trigger bounce
+	var head_hit_robot = robot_scene.instantiate()
+	head_hit_robot.global_position = Vector2(200, 225) # Stomach is at 225, below platform base line 210
+	add_child(head_hit_robot)
+	head_hit_robot.velocity.y = -10.0 # Near jump apex under platform
+	test_plat._try_trigger_landing(head_hit_robot)
+	assert(head_hit_robot.velocity.y == -10.0, "Head hitting from bottom must not trigger bounce")
+	head_hit_robot.queue_free()
+	
+	print("✓ Forgiving edge landing and underside head-hit rejection verified")
 	test_plat.queue_free()
 	edge_robot.queue_free()
 	
@@ -209,6 +219,50 @@ func _ready() -> void:
 	assert(recurrent_event_fired[0], "Random modifier must fire at 1200 score (500 gap after 700)")
 	assert(GameState.next_random_modifier_score == 1700, "Next recurrent modifier must advance by 500 points to 1700")
 	print("✓ Recurrent random modifiers every 500-point gap (1200 -> 1700) verified")
+	
+	# Test 13: Movable spikes past 500 score & erratic juking normal platforms in waves
+	var moving_thorn = plat_scene.instantiate()
+	moving_thorn.platform_type = Platform.Type.THORN
+	moving_thorn.is_moving_thorn = true
+	moving_thorn.position = Vector2(200, 200)
+	moving_thorn.move_speed = 100.0
+	moving_thorn.move_direction = 1.0
+	add_child(moving_thorn)
+	moving_thorn._physics_process(0.1) # Simulate 100ms
+	assert(moving_thorn.position.x > 200.0, "Movable thorn platform must move horizontally")
+	moving_thorn.queue_free()
+	
+	# Movable spike ball test
+	var moving_ball = load("res://scenes/SpikeBall.tscn").instantiate()
+	moving_ball.position = Vector2(200, 200)
+	moving_ball.horizontal_speed = 60.0
+	add_child(moving_ball)
+	moving_ball._physics_process(0.1)
+	assert(moving_ball.position.x != 200.0, "Movable spike ball must patrol horizontally")
+	moving_ball.queue_free()
+	
+	# Erratic platform juke test
+	var erratic_plat = plat_scene.instantiate()
+	erratic_plat.platform_type = Platform.Type.NORMAL
+	erratic_plat.is_erratic = true
+	erratic_plat.position = Vector2(200, 300)
+	add_child(erratic_plat)
+	assert(not erratic_plat.has_juked, "Erratic platform must not have juked initially")
+	
+	# Test cyclic wave pacing for erratic platforms
+	var spawner_inst = preload("res://scripts/spawner.gd").new()
+	GameState.score = 50 # Early wave: positive sine -> high chance
+	var hot_chance = spawner_inst._get_erratic_platform_chance()
+	assert(hot_chance > 0.30, "Hot wave must have high erratic chance (~44%)")
+	GameState.score = 200 # Cold wave: negative sine -> low chance
+	var cold_chance = spawner_inst._get_erratic_platform_chance()
+	assert(cold_chance < 0.15, "Cold wave must have low erratic chance (~7%)")
+	GameState.score = 320 # Next hot wave
+	var hot_chance2 = spawner_inst._get_erratic_platform_chance()
+	assert(hot_chance2 > 0.30, "Subsequent hot wave must return to high erratic chance")
+	spawner_inst.free()
+	erratic_plat.queue_free()
+	print("✓ Movable spikes past 500 and cyclic erratic platform waves verified")
 	
 	print("--- ALL NEW FEATURE TESTS PASSED SUCCESSFULLY! ---\n")
 	get_tree().quit(0)

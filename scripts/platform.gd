@@ -18,11 +18,18 @@ enum Type {
 @onready var sprite: Sprite2D = $Visuals/Sprite2D
 @onready var spikes: Node2D = $Visuals/Spikes
 
-# Moving platform variables
+# Moving & hazard platform variables
 var move_speed: float = 135.0
 var move_direction: float = 1.0
 var left_limit: float = 75.0
 var right_limit: float = 405.0
+var is_moving_thorn: bool = false
+
+# Erratic / juking platform state (looks solid then suddenly jukes away)
+var is_erratic: bool = false
+var has_juked: bool = false
+var is_juking: bool = false
+var target_robot: CharacterBody2D = null
 
 # Crumble state
 var is_broken: bool = false
@@ -56,7 +63,8 @@ func _ready() -> void:
 		landing_area.body_entered.connect(_on_landing_area_body_entered)
 
 func _physics_process(delta: float) -> void:
-	if platform_type == Type.MOVING and not is_broken:
+	# Horizontal patrol for Moving platforms and past-500 Movable Spikes
+	if (platform_type == Type.MOVING or is_moving_thorn) and not is_broken:
 		position.x += move_direction * move_speed * delta
 		if position.x <= left_limit:
 			position.x = left_limit
@@ -65,8 +73,50 @@ func _physics_process(delta: float) -> void:
 			position.x = right_limit
 			move_direction = -1.0
 			
+	# Erratic normal platform: looks solid then suddenly jukes away when robot approaches
+	if is_erratic and not has_juked and not is_juking and not is_broken:
+		_check_erratic_approach()
+			
 	# Generous landing detection for edges and non-level side contacts
 	_check_landing_area()
+
+func _check_erratic_approach() -> void:
+	if not is_instance_valid(target_robot):
+		var robots = get_tree().get_nodes_in_group("robot")
+		if robots.size() > 0:
+			target_robot = robots[0]
+	if is_instance_valid(target_robot):
+		var dy = global_position.y - target_robot.global_position.y
+		var dx = absf(global_position.x - target_robot.global_position.x)
+		# Trigger juke when robot is falling or reaching apex directly above within reach
+		if dy > 25.0 and dy < 145.0 and dx < 95.0 and target_robot.velocity.y > -80.0:
+			_trigger_erratic_juke()
+
+func _trigger_erratic_juke() -> void:
+	is_juking = true
+	# 1. Quick telegraph twitch/jitter (0.08s)
+	var tween = create_tween()
+	if visuals:
+		tween.tween_property(visuals, "position:x", 3.5, 0.04)
+		tween.tween_property(visuals, "position:x", -3.5, 0.04)
+		tween.tween_property(visuals, "position:x", 0.0, 0.02)
+		
+	# 2. Sudden snappy slide/dash to an unexpected position
+	var center = get_viewport_rect().size.x / 2.0
+	var shift = randf_range(90.0, 130.0)
+	var dir = 1.0 if position.x < center else -1.0
+	if randf() < 0.25:
+		dir = -dir
+	var target_x = clampf(position.x + (shift * dir), left_limit, right_limit)
+	
+	tween.tween_property(self, "position:x", target_x, 0.20)\
+		.set_trans(Tween.TRANS_QUAD)\
+		.set_ease(Tween.EASE_OUT)
+		
+	tween.finished.connect(func():
+		has_juked = true
+		is_juking = false
+	)
 
 func apply_type_style() -> void:
 	if not sprite:
@@ -133,6 +183,13 @@ func _try_trigger_landing(body: Node2D) -> void:
 		if robot.get("is_dead") == true or robot.get("is_falling_death") == true:
 			return
 			
+		# Stomach or higher must be higher than the platform base line:
+		# If robot's stomach is below the platform bottom, it is hitting from underneath (head bump) -> NO BOUNCE!
+		var platform_base_line = global_position.y + (10.0 * absf(scale.y))
+		var robot_stomach_y = robot.global_position.y
+		if robot_stomach_y > platform_base_line:
+			return
+			
 		# Thorn hazard check: keep hazard bounding fair to visual spikes
 		if platform_type == Type.THORN:
 			var plat_hw = 44.0 * absf(scale.x)
@@ -140,10 +197,10 @@ func _try_trigger_landing(body: Node2D) -> void:
 				return
 				
 		# Only bounce if falling or at jump apex (not rocketing upward through platforms)
-		if robot.velocity.y >= -60.0:
+		if robot.velocity.y >= -20.0:
 			# Gently elevate robot if slightly below platform top for crisp, responsive jump feel
 			var top_y = global_position.y - 28.0
-			if robot.global_position.y > top_y:
+			if robot.global_position.y > top_y and robot.global_position.y <= platform_base_line:
 				robot.global_position.y = top_y
 			on_robot_landed(robot)
 

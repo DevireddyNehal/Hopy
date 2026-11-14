@@ -11,7 +11,7 @@ func _ready() -> void:
 	assert(not death_screen.visible, "DeathScreen should start hidden")
 	print("✓ DeathScreen initial hidden state verified")
 	
-	# Test Low tier (< 100)
+	# Test Low tier (< 500)
 	GameState.start_game()
 	GameState.score = 45
 	GameState.best_score = 300
@@ -27,13 +27,13 @@ func _ready() -> void:
 		if death_screen.roast_label.text == "\"" + r + "\"":
 			low_matches = true
 			break
-	assert(low_matches, "Low tier roast should be picked for score < 100")
-	print("✓ Low tier roast (< 100) verified: " + death_screen.roast_label.text)
+	assert(low_matches, "Low tier roast should be picked for score < 500")
+	print("✓ Low tier roast (< 500) verified: " + death_screen.roast_label.text)
 	
-	# Test Mid tier (100 - 499)
+	# Test Mid tier (500 - 1499: low-middle score, no praise)
 	GameState.start_game()
-	GameState.score = 250
-	GameState.best_score = 300
+	GameState.score = 650
+	GameState.best_score = 1200
 	GameState.end_game()
 	var mid_roasts = death_screen.death_lines.get("mid", [])
 	var mid_matches = false
@@ -41,13 +41,13 @@ func _ready() -> void:
 		if death_screen.roast_label.text == "\"" + r + "\"":
 			mid_matches = true
 			break
-	assert(mid_matches, "Mid tier roast should be picked for score 100-499")
-	print("✓ Mid tier roast (100-499) verified: " + death_screen.roast_label.text)
+	assert(mid_matches, "Mid tier roast should be picked for score 500-1499")
+	print("✓ Mid tier roast (500-1499) verified: " + death_screen.roast_label.text)
 	
-	# Test High tier (500+) and New Best
+	# Test High tier (1500+: praise unlocked) and New Best
 	GameState.start_game()
-	GameState.score = 850
-	GameState.best_score = 850
+	GameState.score = 1650
+	GameState.best_score = 1650
 	GameState.end_game()
 	var high_roasts = death_screen.death_lines.get("high", [])
 	var high_matches = false
@@ -55,9 +55,9 @@ func _ready() -> void:
 		if death_screen.roast_label.text == "\"" + r + "\"":
 			high_matches = true
 			break
-	assert(high_matches, "High tier roast should be picked for score >= 500")
+	assert(high_matches, "High tier roast should be picked for score >= 1500")
 	assert(death_screen.new_best_label.visible, "New best badge should be visible")
-	print("✓ High tier roast (500+) & New Best badge verified: " + death_screen.roast_label.text)
+	print("✓ High tier roast (1500+) & New Best badge verified: " + death_screen.roast_label.text)
 	
 	print("--- DEATH SCREEN TESTS PASSED SUCCESSFULLY! ---\n")
 	get_tree().quit(0)
