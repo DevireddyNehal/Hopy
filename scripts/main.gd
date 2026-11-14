@@ -36,10 +36,6 @@ func _physics_process(_delta: float) -> void:
 		var current_height = maxf(0.0, (start_y - robot.global_position.y) / 8.0)
 		GameState.update_score(int(current_height))
 		
-	# Spacebar restart when game over
-	if can_restart and Input.is_action_just_pressed("start_action"):
-		_restart_game()
-
 func _on_color_scheme_changed(scheme_index: int) -> void:
 	if scheme_index < GameState.COLOR_SCHEMES.size():
 		var scheme = GameState.COLOR_SCHEMES[scheme_index]
@@ -47,9 +43,4 @@ func _on_color_scheme_changed(scheme_index: int) -> void:
 			background_rect.color = scheme["bg"]
 
 func _on_game_over() -> void:
-	# Enable instant Space restart
-	can_restart = true
-
-func _restart_game() -> void:
-	can_restart = false
-	get_tree().reload_current_scene()
+	pass
