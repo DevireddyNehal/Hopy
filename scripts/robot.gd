@@ -82,8 +82,9 @@ func bounce(multiplier: float = 1.0) -> void:
 	current_bounce_multiplier = multiplier
 	velocity.y = bounce_velocity * current_bounce_multiplier
 	
-	# Notify GameState combo tracker
+	# Notify GameState combo tracker & audio
 	GameState.increment_combo()
+	GameState.play_bounce()
 	bounced.emit(current_bounce_multiplier)
 	
 	# Quick squash & stretch bounce animation

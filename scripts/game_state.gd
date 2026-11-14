@@ -29,10 +29,69 @@ const COLOR_SCHEMES = [
 	{"bg": Color("050510"), "accent1": Color("ff007f"), "accent2": Color("76ff03")}  # 1000+: Hyperdrive
 ]
 
+signal meme_triggered(meme_text: String)
+
+var sfx_bounce: AudioStream
+var sfx_rainbow: AudioStream
+var sfx_meme: AudioStream
+var meme_list: Array = []
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_setup_inputs()
+	_load_audio_and_data()
 	load_best_score()
+
+func _load_audio_and_data() -> void:
+	if ResourceLoader.exists("res://assets/audio/bounce.wav"):
+		sfx_bounce = load("res://assets/audio/bounce.wav")
+	if ResourceLoader.exists("res://assets/audio/rainbow.mp3"):
+		sfx_rainbow = load("res://assets/audio/rainbow.mp3")
+	if ResourceLoader.exists("res://assets/audio/meme.mp3"):
+		sfx_meme = load("res://assets/audio/meme.mp3")
+		
+	# Load memes
+	if FileAccess.file_exists("res://data/meme_text.json"):
+		var f = FileAccess.open("res://data/meme_text.json", FileAccess.READ)
+		if f:
+			var json = JSON.new()
+			if json.parse(f.get_as_text()) == OK and json.data is Array:
+				meme_list = json.data
+			f.close()
+
+func play_bounce() -> void:
+	if not sfx_bounce:
+		return
+	var p = AudioStreamPlayer.new()
+	p.stream = sfx_bounce
+	p.pitch_scale = clampf(1.0 + (combo * 0.04), 0.95, 2.2)
+	add_child(p)
+	p.play()
+	p.finished.connect(p.queue_free)
+
+func play_rainbow() -> void:
+	if not sfx_rainbow:
+		return
+	var p = AudioStreamPlayer.new()
+	p.stream = sfx_rainbow
+	add_child(p)
+	p.play()
+	p.finished.connect(p.queue_free)
+
+func play_meme() -> void:
+	if not sfx_meme:
+		return
+	var p = AudioStreamPlayer.new()
+	p.stream = sfx_meme
+	add_child(p)
+	p.play()
+	p.finished.connect(p.queue_free)
+
+func trigger_meme() -> void:
+	play_meme()
+	if meme_list.size() > 0:
+		var picked = meme_list[randi() % meme_list.size()]
+		meme_triggered.emit(picked)
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:

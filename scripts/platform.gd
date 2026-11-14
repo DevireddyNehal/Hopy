@@ -14,21 +14,21 @@ enum Type {
 
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
 @onready var visuals: Node2D = $Visuals
-@onready var base_rect: ColorRect = $Visuals/BaseRect
+@onready var sprite: Sprite2D = $Visuals/Sprite2D
 @onready var spikes: Node2D = $Visuals/Spikes
 
 # Moving platform variables
-var move_speed: float = 180.0
+var move_speed: float = 240.0
 var move_direction: float = 1.0
-var left_limit: float = 80.0
-var right_limit: float = 1840.0
+var left_limit: float = 100.0
+var right_limit: float = 1820.0
 
 # Crumble state
 var is_broken: bool = false
 
 func _ready() -> void:
 	apply_type_style()
-	right_limit = get_viewport_rect().size.x - 80.0
+	right_limit = get_viewport_rect().size.x - 100.0
 	# Randomize moving platform start direction
 	if randf() > 0.5:
 		move_direction = -1.0
@@ -44,24 +44,27 @@ func _physics_process(delta: float) -> void:
 			move_direction = -1.0
 
 func apply_type_style() -> void:
-	# Hide spikes by default
+	# Toggle spikes for THORN
 	if spikes:
 		spikes.visible = (platform_type == Type.THORN)
 	
-	# Visual placeholder colors
+	if not sprite:
+		return
+		
+	# Tint platform sprite based on type
 	match platform_type:
 		Type.NORMAL:
-			base_rect.color = Color("00f0ff") # Electric Cyan
+			sprite.modulate = Color(1.0, 1.0, 1.0)
 		Type.MOVING:
-			base_rect.color = Color("39ff14") # Lime Green
+			sprite.modulate = Color(0.3, 1.0, 0.45) # Toxic neon green
 		Type.CRUMBLE:
-			base_rect.color = Color("ffaa00") # Crumbly Orange
+			sprite.modulate = Color(1.0, 0.65, 0.2) # Crumble rust
 		Type.RAINBOW:
-			base_rect.color = Color("ff007f") # Hot Magenta
+			sprite.modulate = Color(1.0, 0.25, 0.9) # Hot magenta
 		Type.THORN:
-			base_rect.color = Color("d50000") # Crimson Hazard Red
+			sprite.modulate = Color(1.0, 0.2, 0.2) # Crimson hazard
 		Type.MEME:
-			base_rect.color = Color("ffd600") # Gold / Meme Yellow
+			sprite.modulate = Color(1.0, 0.88, 0.1) # Golden yellow
 
 func on_robot_landed(robot: CharacterBody2D) -> void:
 	if is_broken:
@@ -75,8 +78,9 @@ func on_robot_landed(robot: CharacterBody2D) -> void:
 			robot.bounce(1.0)
 			
 		Type.RAINBOW:
-			# 1.5x Super bounce
+			# 1.5x Super bounce + MJ Hee-Hee sound!
 			robot.bounce(1.5)
+			GameState.play_rainbow()
 			
 		Type.THORN:
 			# Thorn platform kills immediately!
@@ -93,16 +97,17 @@ func on_robot_landed(robot: CharacterBody2D) -> void:
 			
 		Type.MEME:
 			robot.bounce(1.0)
+			GameState.trigger_meme()
 
 func _trigger_crumble() -> void:
 	var tween = create_tween()
 	# Shake then fall
-	tween.tween_property(visuals, "position:x", 4.0, 0.04)
-	tween.tween_property(visuals, "position:x", -4.0, 0.04)
+	tween.tween_property(visuals, "position:x", 6.0, 0.04)
+	tween.tween_property(visuals, "position:x", -6.0, 0.04)
 	tween.tween_property(visuals, "position:x", 0.0, 0.04)
 	tween.tween_callback(func():
 		collision_shape.set_deferred("disabled", true)
 	)
 	# Fade out & drop
 	tween.tween_property(visuals, "modulate:a", 0.0, 0.2)
-	tween.parallel().tween_property(visuals, "position:y", 30.0, 0.2)
+	tween.parallel().tween_property(visuals, "position:y", 40.0, 0.2)

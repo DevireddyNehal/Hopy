@@ -1,9 +1,10 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/platform.gd" id="1_plat"]
+[ext_resource type="Texture2D" path="res://assets/sprites/platform.png" id="2_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_platform"]
-size = Vector2(96, 18)
+size = Vector2(150, 24)
 
 [node name="Platform" type="StaticBody2D" groups=["platforms"]]
 collision_layer = 2
@@ -13,28 +14,29 @@ script = ExtResource("1_plat")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_platform")
 one_way_collision = true
-one_way_collision_margin = 8.0
+one_way_collision_margin = 10.0
 
 [node name="Visuals" type="Node2D" parent="."]
 
-[node name="BaseRect" type="ColorRect" parent="Visuals"]
-offset_left = -48.0
-offset_top = -9.0
-offset_right = 48.0
-offset_bottom = 9.0
-color = Color(0, 0.941176, 1, 1)
+[node name="Sprite2D" type="Sprite2D" parent="Visuals"]
+scale = Vector2(0.32, 0.32)
+texture = ExtResource("2_tex")
 
 [node name="Spikes" type="Node2D" parent="Visuals"]
 visible = false
 
 [node name="Spike1" type="Polygon2D" parent="Visuals/Spikes"]
-color = Color(1, 0.1, 0.1, 1)
-polygon = PackedVector2Array(-36, -9, -28, -20, -20, -9)
+color = Color(1, 0.15, 0.15, 1)
+polygon = PackedVector2Array(-50, -12, -40, -26, -30, -12)
 
 [node name="Spike2" type="Polygon2D" parent="Visuals/Spikes"]
-color = Color(1, 0.1, 0.1, 1)
-polygon = PackedVector2Array(-12, -9, -4, -20, 4, -9)
+color = Color(1, 0.15, 0.15, 1)
+polygon = PackedVector2Array(-20, -12, -10, -26, 0, -12)
 
 [node name="Spike3" type="Polygon2D" parent="Visuals/Spikes"]
-color = Color(1, 0.1, 0.1, 1)
-polygon = PackedVector2Array(12, -9, 20, -20, 28, -9)
+color = Color(1, 0.15, 0.15, 1)
+polygon = PackedVector2Array(10, -12, 20, -26, 30, -12)
+
+[node name="Spike4" type="Polygon2D" parent="Visuals/Spikes"]
+color = Color(1, 0.15, 0.15, 1)
+polygon = PackedVector2Array(35, -12, 45, -26, 55, -12)
