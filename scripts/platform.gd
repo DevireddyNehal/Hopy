@@ -18,16 +18,17 @@ enum Type {
 @onready var spikes: Node2D = $Visuals/Spikes
 
 # Moving platform variables
-var move_speed: float = 120.0
+var move_speed: float = 180.0
 var move_direction: float = 1.0
-var left_limit: float = 100.0
-var right_limit: float = 1050.0
+var left_limit: float = 80.0
+var right_limit: float = 1840.0
 
 # Crumble state
 var is_broken: bool = false
 
 func _ready() -> void:
 	apply_type_style()
+	right_limit = get_viewport_rect().size.x - 80.0
 	# Randomize moving platform start direction
 	if randf() > 0.5:
 		move_direction = -1.0

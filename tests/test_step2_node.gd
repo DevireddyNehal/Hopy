@@ -48,8 +48,9 @@ func _ready() -> void:
 	robot.is_dead = false
 	death_signal[0] = false
 	GameState.start_game()
+	var half_h = camera.get_viewport_rect().size.y / 2.0
 	camera.global_position.y = 0.0
-	robot.global_position.y = camera.global_position.y + 400.0 # Well below screen bottom (324 + 40 = 364)
+	robot.global_position.y = camera.global_position.y + half_h + 150.0 # Below screen bottom
 	camera._physics_process(0.016)
 	assert(robot.is_dead == true, "Falling below camera bottom must trigger death")
 	print("✓ Falling below camera triggers death verified")

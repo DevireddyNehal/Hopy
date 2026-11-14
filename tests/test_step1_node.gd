@@ -11,14 +11,14 @@ func _ready() -> void:
 	
 	# 1. Test Initial Properties
 	assert(robot.gravity == 1400.0, "Gravity should be 1400.0")
-	assert(robot.steer_speed == 320.0, "Steer speed should be 320.0")
-	assert(robot.bounce_velocity == -700.0, "Bounce velocity should be -700.0")
-	print("✓ Robot properties verified (Gravity 1400, Speed 320, Bounce -700)")
+	assert(robot.steer_speed == 520.0, "Steer speed should be 520.0")
+	assert(robot.bounce_velocity == -750.0, "Bounce velocity should be -750.0")
+	print("✓ Robot properties verified (Gravity 1400, Speed 520, Bounce -750)")
 	
 	# 2. Test Bounce & Combo
 	var initial_combo = GameState.combo
 	robot.bounce()
-	assert(robot.velocity.y == -700.0, "Bounce must set velocity.y to bounce_velocity (-700.0)")
+	assert(robot.velocity.y == -750.0, "Bounce must set velocity.y to bounce_velocity (-750.0)")
 	assert(GameState.combo == initial_combo + 1, "Bounce must increment GameState combo")
 	print("✓ Robot bounce sets vertical velocity and increments combo")
 	
@@ -27,7 +27,8 @@ func _ready() -> void:
 	robot._physics_process(0.016)
 	assert(robot.position.x > 1100.0, "Exiting left edge must wrap to right edge")
 	
-	robot.position.x = 1175.0
+	var screen_w = robot.get_viewport_rect().size.x
+	robot.position.x = screen_w + 30.0
 	robot._physics_process(0.016)
 	assert(robot.position.x < 50.0, "Exiting right edge must wrap to left edge")
 	print("✓ Screen wrapping left and right verified")

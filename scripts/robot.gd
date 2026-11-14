@@ -4,14 +4,12 @@ class_name Robot
 signal bounced(power: float)
 
 @export var gravity: float = 1400.0
-@export var steer_speed: float = 320.0
-@export var bounce_velocity: float = -700.0
+@export var steer_speed: float = 520.0
+@export var bounce_velocity: float = -750.0
 
 @onready var sprite: Node2D = $Visuals
 @onready var effect_spawn_point: Marker2D = $EffectSpawnPoint
 
-# Screen boundaries (Viewport is 1152 x 648)
-const SCREEN_WIDTH: float = 1152.0
 const HALF_WIDTH: float = 16.0 # half robot width for clean wrapping
 
 # Multiplier applied when special platforms (like Rainbow) boost the bounce
@@ -61,9 +59,10 @@ func _physics_process(delta: float) -> void:
 	# 5. Screen boundary handling:
 	# Choice: SCREEN WRAPPING. Exiting the left edge wraps the robot to the right edge,
 	# and exiting the right edge wraps the robot to the left edge.
+	var screen_width = get_viewport_rect().size.x
 	if position.x < -HALF_WIDTH:
-		position.x = SCREEN_WIDTH + HALF_WIDTH
-	elif position.x > SCREEN_WIDTH + HALF_WIDTH:
+		position.x = screen_width + HALF_WIDTH
+	elif position.x > screen_width + HALF_WIDTH:
 		position.x = -HALF_WIDTH
 
 func die() -> void:

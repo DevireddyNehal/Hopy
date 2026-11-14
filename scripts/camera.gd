@@ -23,7 +23,8 @@ func _physics_process(delta: float) -> void:
 			
 	# 2. Falling below screen death condition:
 	# If target drops below the visible bottom of the camera view:
-	var screen_bottom = global_position.y + viewport_half_height + 40.0
+	var half_h = get_viewport_rect().size.y / 2.0
+	var screen_bottom = global_position.y + half_h + 60.0
 	if target.global_position.y > screen_bottom:
 		if target.has_method("die"):
 			target.die()
