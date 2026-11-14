@@ -4,6 +4,7 @@ extends Node2D
 @onready var camera: Camera2D = $Camera2D
 @onready var spawner: Node2D = $Spawner
 @onready var background_rect: ColorRect = $Background/ColorRect
+@onready var effects: Node2D = $Effects
 
 var can_restart: bool = false
 var start_y: float = 450.0
@@ -16,6 +17,9 @@ func _ready() -> void:
 	_on_color_scheme_changed(GameState.color_scheme_index)
 	spawner.camera = camera
 	camera.target = robot
+	
+	if effects and effects.has_method("bind_character") and robot.has_node("Visuals"):
+		effects.bind_character(robot.get_node("Visuals"))
 	
 	# Dynamically center robot & camera for any resolution (1080p, 1440p, fullscreen)
 	var screen_size = get_viewport_rect().size

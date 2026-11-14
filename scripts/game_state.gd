@@ -8,6 +8,7 @@ signal milestone_reached(points: int)
 signal game_started
 signal game_over
 signal game_paused(is_paused: bool)
+signal effect_requested(effect_name: StringName, extra_data: Variant)
 
 var score: int = 0
 var combo: int = 0
@@ -117,6 +118,9 @@ func trigger_meme() -> void:
 	if meme_list.size() > 0:
 		var picked = meme_list[randi() % meme_list.size()]
 		meme_triggered.emit(picked)
+
+func trigger_effect(effect_name: StringName, extra_data: Variant = null) -> void:
+	effect_requested.emit(effect_name, extra_data)
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:

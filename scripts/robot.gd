@@ -79,6 +79,7 @@ func die() -> void:
 	var tween = create_tween()
 	tween.tween_property(sprite, "rotation", PI * 2, 0.4)
 	tween.parallel().tween_property(sprite, "scale", Vector2.ZERO, 0.4)
+	GameState.trigger_effect(&"screen_flash", Color(1.0, 0.2, 0.2, 0.5))
 	GameState.end_game()
 
 func bounce(multiplier: float = 1.0) -> void:
@@ -91,6 +92,10 @@ func bounce(multiplier: float = 1.0) -> void:
 	GameState.increment_combo()
 	GameState.play_bounce()
 	bounced.emit(current_bounce_multiplier)
+	
+	# Visual landing effects: sparkles at feet + character pulse
+	GameState.trigger_effect(&"sparkle", global_position + Vector2(0, 16))
+	GameState.trigger_effect(&"pulse")
 	
 	# Quick squash & stretch bounce animation
 	_play_squash_and_stretch()

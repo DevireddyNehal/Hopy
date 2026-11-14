@@ -78,12 +78,16 @@ func on_robot_landed(robot: CharacterBody2D) -> void:
 			robot.bounce(1.0)
 			
 		Type.RAINBOW:
-			# 1.5x Super bounce + MJ Hee-Hee sound!
+			# 1.5x Super bounce + MJ Hee-Hee sound + 360 flip + confetti!
 			robot.bounce(1.5)
 			GameState.play_rainbow()
+			GameState.trigger_effect(&"confetti", global_position)
+			GameState.trigger_effect(&"flip")
 			
 		Type.THORN:
 			# Thorn platform kills immediately!
+			GameState.trigger_effect(&"shatter", global_position)
+			GameState.trigger_effect(&"screen_flash", Color(1.0, 0.15, 0.15, 0.6))
 			if robot.has_method("die"):
 				robot.die()
 			else:
@@ -98,8 +102,10 @@ func on_robot_landed(robot: CharacterBody2D) -> void:
 		Type.MEME:
 			robot.bounce(1.0)
 			GameState.trigger_meme()
+			GameState.trigger_effect(&"pixel_emoji", global_position)
 
 func _trigger_crumble() -> void:
+	GameState.trigger_effect(&"shatter", global_position)
 	var tween = create_tween()
 	# Shake then fall
 	tween.tween_property(visuals, "position:x", 6.0, 0.04)
