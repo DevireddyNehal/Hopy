@@ -19,6 +19,11 @@ var current_bounce_multiplier: float = 1.0
 var steer_multiplier: float = 1.0
 var is_dead: bool = false
 
+func _ready() -> void:
+	# Launch upward on start/restart like classic Doodle Jump!
+	velocity.y = bounce_velocity
+	_play_squash_and_stretch()
+
 func _physics_process(delta: float) -> void:
 	if is_dead:
 		return

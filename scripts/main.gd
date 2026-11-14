@@ -23,7 +23,7 @@ func _ready() -> void:
 	var center_y = screen_size.y / 2.0
 	
 	camera.global_position = Vector2(center_x, center_y)
-	robot.global_position = Vector2(center_x, center_y + 120.0)
+	robot.global_position = Vector2(center_x, center_y + 80.0)
 	start_y = robot.global_position.y
 
 func _physics_process(_delta: float) -> void:

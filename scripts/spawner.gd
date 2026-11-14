@@ -42,10 +42,12 @@ func _spawn_initial_platforms() -> void:
 	var center_x = screen_size.x / 2.0
 	var center_y = screen_size.y / 2.0
 	
-	highest_spawned_y = center_y + 120.0
+	highest_spawned_y = center_y + 180.0
 	
-	# 1. Guaranteed first safe landing platform directly underneath the robot
-	_spawn_platform_at(Vector2(center_x, highest_spawned_y), PlatformScript.Type.NORMAL)
+	# 1. Guaranteed first safe landing platform directly underneath the robot (2.5x wide!)
+	var start_plat = _spawn_platform_at(Vector2(center_x, highest_spawned_y), PlatformScript.Type.NORMAL)
+	if start_plat:
+		start_plat.scale = Vector2(2.5, 1.0)
 	
 	# 2. Pre-spawn an open, spacious trail of platforms climbing upward
 	for i in range(16):
@@ -97,12 +99,13 @@ func _pick_type() -> int:
 		chosen_type = specials[randi() % specials.size()]
 	return chosen_type
 
-func _spawn_platform_at(pos: Vector2, type: int) -> void:
+func _spawn_platform_at(pos: Vector2, type: int) -> StaticBody2D:
 	var plat = platform_scene.instantiate()
 	plat.global_position = pos
 	plat.platform_type = type
 	add_child(plat)
 	active_platforms.append(plat)
+	return plat
 
 func _cleanup_old_platforms(threshold_y: float) -> void:
 	var surviving: Array[StaticBody2D] = []
