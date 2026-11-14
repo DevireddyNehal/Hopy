@@ -190,5 +190,25 @@ func _ready() -> void:
 	print("✓ Static handmade background texture node verified in Main")
 	main2.queue_free()
 	
+	# Test 12: Recurrent 500-point gap modifiers after initial two (500 Drunk, 700 Inverted)
+	GameState.start_game()
+	GameState.update_score(505) # 1. Initial Drunk Buff at 500
+	GameState.drunk_warning_active = false
+	GameState.is_drunk = false
+	GameState.update_score(705) # 2. Initial Inverted Controls at 700 (500 + 200)
+	GameState.controls_warning_active = false
+	GameState.are_controls_inverted = false
+	assert(GameState.next_random_modifier_score == 1200, "First recurrent modifier must be scheduled at 1200 (700 + 500)")
+	
+	var recurrent_event_fired = [false]
+	GameState.drunk_warning_started.connect(func(): recurrent_event_fired[0] = true)
+	GameState.controls_inverted_warning_started.connect(func(): recurrent_event_fired[0] = true)
+	
+	# Score 1200 (+500 gap after 700) triggers random modifier
+	GameState.update_score(1205)
+	assert(recurrent_event_fired[0], "Random modifier must fire at 1200 score (500 gap after 700)")
+	assert(GameState.next_random_modifier_score == 1700, "Next recurrent modifier must advance by 500 points to 1700")
+	print("✓ Recurrent random modifiers every 500-point gap (1200 -> 1700) verified")
+	
 	print("--- ALL NEW FEATURE TESTS PASSED SUCCESSFULLY! ---\n")
 	get_tree().quit(0)
