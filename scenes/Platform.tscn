@@ -1,0 +1,39 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/platform.gd" id="1_platform"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape_body"]
+size = Vector2(120, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape_sensor"]
+size = Vector2(112, 10)
+
+[node name="Platform" type="AnimatableBody2D"]
+sync_to_physics = true
+collision_layer = 2
+collision_mask = 0
+script = ExtResource("1_platform")
+
+[node name="Visual" type="Polygon2D" parent="."]
+unique_name_in_owner = true
+polygon = PackedVector2Array(-60, -10, 60, -10, 60, 10, -60, 10)
+color = Color(0.55, 0.36, 1, 1)
+
+[node name="BodyShape" type="CollisionShape2D" parent="."]
+unique_name_in_owner = true
+shape = SubResource("RectangleShape_body")
+
+[node name="LandingSensor" type="Area2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(0, -15)
+collision_layer = 0
+collision_mask = 1
+monitorable = false
+
+[node name="SensorShape" type="CollisionShape2D" parent="LandingSensor"]
+shape = SubResource("RectangleShape_sensor")
+
+[node name="CrumbleTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 0.15
+one_shot = true
