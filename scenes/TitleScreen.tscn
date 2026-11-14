@@ -70,7 +70,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
 theme_override_font_sizes/font_size = 18
-text = "★ BEST RECORD: 0 ★"
+text = "BEST RECORD: 0"
 horizontal_alignment = 1
 
 [node name="DancingMeme" type="Control" parent="Center/VBox"]
@@ -104,21 +104,21 @@ alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
 theme_override_font_sizes/font_size = 16
-text = "🎮 CONTROLS: [A] [D] or [←] [→] to Steer"
+text = "CONTROLS: [A] [D] or [LEFT] [RIGHT] to Steer"
 horizontal_alignment = 1
 
 [node name="WrapInfo" type="Label" parent="Center/VBox/InstructionsPanel/Margin/InfoVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
 theme_override_font_sizes/font_size = 14
-text = "↔ Screen wraps left to right and right to left"
+text = "Screen wraps left to right and right to left"
 horizontal_alignment = 1
 
 [node name="TipsInfo" type="Label" parent="Center/VBox/InstructionsPanel/Margin/InfoVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.8, 0.4, 1)
 theme_override_font_sizes/font_size = 13
-text = "★ Ride Rainbows for Mega Bounces | Avoid Thorn Spikes!"
+text = "Ride Rainbows for Mega Bounces | Avoid Thorn Spikes!"
 horizontal_alignment = 1
 
 [node name="StartPrompt" type="Label" parent="Center/VBox"]

@@ -11,7 +11,7 @@ func _ready() -> void:
 	GameState.load_best_score()
 	if best_label:
 		if GameState.best_score > 0:
-			best_label.text = "★ BEST RECORD: " + str(GameState.best_score) + " ★"
+			best_label.text = "BEST RECORD: " + str(GameState.best_score)
 			best_label.visible = true
 		else:
 			best_label.text = "CAN YOU REACH 500 PTS?"

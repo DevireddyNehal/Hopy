@@ -191,7 +191,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "×2 COMBO!"
+text = "x2 COMBO!"
 label_settings = SubResource("LabelSettings_combo")
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -221,7 +221,7 @@ theme_override_constants/margin_bottom = 4
 
 [node name="MemeLabel" type="Label" parent="Control/MemeCard/MarginContainer"]
 layout_mode = 2
-text = "✨ NO CAP ✨"
+text = "NO CAP"
 label_settings = SubResource("LabelSettings_meme")
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -253,7 +253,7 @@ theme_override_constants/margin_bottom = 4
 [node name="MilestoneLabel" type="Label" parent="Control/MilestoneBanner/Margin"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "🔥 500 PTS REACHED! 🔥"
+text = "500 PTS REACHED!"
 label_settings = SubResource("LabelSettings_milestone")
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -288,7 +288,7 @@ alignment = 1
 [node name="DisclaimerTitle" type="Label" parent="Control/DisclaimerBanner/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "⚠️ -999 SOCIAL CREDIT ⚠️"
+text = "! -999 SOCIAL CREDIT !"
 label_settings = SubResource("LabelSettings_disclaimer_title")
 horizontal_alignment = 1
 
@@ -302,7 +302,7 @@ horizontal_alignment = 1
 [node name="CountdownLabel" type="Label" parent="Control/DisclaimerBanner/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "⚡ INVERTING IN: 3 ⚡"
+text = "[ INVERTING IN: 3 ]"
 label_settings = SubResource("LabelSettings_countdown")
 horizontal_alignment = 1
 
@@ -332,7 +332,7 @@ theme_override_constants/margin_bottom = 3
 
 [node name="DrunkLabel" type="Label" parent="Control/DrunkIndicator/Margin"]
 layout_mode = 2
-text = "🍺 DRUNK BUFF [+10% JUMP & SWAY] 🥴"
+text = "DRUNK BUFF [+10% JUMP & SWAY]"
 label_settings = SubResource("LabelSettings_drunk")
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -364,7 +364,7 @@ theme_override_constants/margin_bottom = 3
 [node name="InvertedLabel" type="Label" parent="Control/InvertedIndicator/Margin"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "🔄 REVERSED CONTROLS [LEFT ↔ RIGHT] 🔄"
+text = "REVERSED CONTROLS [LEFT / RIGHT]"
 label_settings = SubResource("LabelSettings_inverted")
 horizontal_alignment = 1
 vertical_alignment = 1

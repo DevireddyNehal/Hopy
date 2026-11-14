@@ -71,13 +71,13 @@ func _on_combo_changed(new_combo: int) -> void:
 	if new_combo > 1:
 		combo_container.visible = true
 		if new_combo >= 10:
-			combo_label.text = "⚡ ×" + str(new_combo) + " HYPER COMBO! ⚡"
+			combo_label.text = ">> x" + str(new_combo) + " HYPER COMBO! <<"
 			combo_label.modulate = Color("c084fc") # Celestial starlight violet
 		elif new_combo >= 5:
-			combo_label.text = "★ ×" + str(new_combo) + " SUPER COMBO! ★"
+			combo_label.text = "* x" + str(new_combo) + " SUPER COMBO! *"
 			combo_label.modulate = Color("fbbf24") # Radiant amber topaz
 		else:
-			combo_label.text = "×" + str(new_combo) + " COMBO!"
+			combo_label.text = "x" + str(new_combo) + " COMBO!"
 			combo_label.modulate = Color("38bdf8") # Ice azure
 		
 		# Punchy pop animation on increment
@@ -92,7 +92,7 @@ func _on_combo_changed(new_combo: int) -> void:
 func _show_meme_card(text: String) -> void:
 	if not meme_card or not meme_label:
 		return
-	meme_label.text = "✨ " + text.to_upper() + " ✨"
+	meme_label.text = text.to_upper()
 	meme_card.visible = true
 	meme_card.modulate.a = 1.0
 	meme_card.scale = Vector2(0.2, 0.2)
@@ -112,11 +112,11 @@ func _show_milestone(points: int) -> void:
 	if not milestone_banner or not milestone_label:
 		return
 	if points == 500:
-		milestone_label.text = "🔥 500 PTS REACHED! 🔥"
+		milestone_label.text = "500 PTS REACHED!"
 	elif points == 1000:
-		milestone_label.text = "👑 1000 PTS LEGEND! 👑"
+		milestone_label.text = "1000 PTS LEGEND!"
 	else:
-		milestone_label.text = "★ " + str(points) + " PTS MILESTONE! ★"
+		milestone_label.text = str(points) + " PTS MILESTONE!"
 		
 	milestone_banner.visible = true
 	milestone_banner.modulate.a = 1.0
@@ -137,7 +137,7 @@ func _on_controls_warning_started() -> void:
 	if not disclaimer_banner or not countdown_label:
 		return
 	if disclaimer_title:
-		disclaimer_title.text = "⚠️ -999 SOCIAL CREDIT ⚠️"
+		disclaimer_title.text = "! -999 SOCIAL CREDIT !"
 		disclaimer_title.label_settings.font_color = Color(1.0, 0.2, 0.2, 1.0)
 	if disclaimer_sub:
 		disclaimer_sub.text = "MALFUNCTION: CONTROLS INVERTING!"
@@ -154,23 +154,23 @@ func _on_controls_warning_started() -> void:
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.tween_property(disclaimer_banner, "scale", Vector2(1.0, 1.0), 0.1)
 	
-	countdown_label.text = "⚡ INVERTING IN: 3 ⚡"
+	countdown_label.text = "[ INVERTING IN: 3 ]"
 	var t1 = get_tree().create_timer(1.0)
 	t1.timeout.connect(func():
 		if is_instance_valid(countdown_label) and GameState.controls_warning_active:
-			countdown_label.text = "⚡ INVERTING IN: 2 ⚡"
+			countdown_label.text = "[ INVERTING IN: 2 ]"
 			GameState.trigger_effect(&"shake", 4.0)
 	)
 	var t2 = get_tree().create_timer(2.0)
 	t2.timeout.connect(func():
 		if is_instance_valid(countdown_label) and GameState.controls_warning_active:
-			countdown_label.text = "⚡ INVERTING IN: 1 ⚡"
+			countdown_label.text = "[ INVERTING IN: 1 ]"
 			GameState.trigger_effect(&"shake", 6.0)
 	)
 	var t3 = get_tree().create_timer(3.0)
 	t3.timeout.connect(func():
 		if is_instance_valid(countdown_label):
-			countdown_label.text = "💥 CONTROLS INVERTED! 💥"
+			countdown_label.text = "! CONTROLS INVERTED !"
 			GameState.trigger_effect(&"shake", 10.0)
 			GameState.trigger_effect(&"screen_flash", Color(1.0, 0.1, 0.1, 0.5))
 		if is_instance_valid(disclaimer_banner):
@@ -185,13 +185,13 @@ func _on_controls_inverted() -> void:
 		inverted_indicator.visible = true
 		inverted_indicator.modulate.a = 1.0
 		if inverted_label:
-			inverted_label.text = "🔄 REVERSED CONTROLS [5s] 🔄"
+			inverted_label.text = "REVERSED CONTROLS [5s]"
 			for s in range(1, 5):
 				var remaining = 5 - s
 				var t = get_tree().create_timer(float(s))
 				t.timeout.connect(func():
 					if is_instance_valid(inverted_label) and GameState.are_controls_inverted:
-						inverted_label.text = "🔄 REVERSED CONTROLS [" + str(remaining) + "s] 🔄"
+						inverted_label.text = "REVERSED CONTROLS [" + str(remaining) + "s]"
 				)
 		var p_tween = create_tween().set_loops()
 		p_tween.tween_property(inverted_indicator, "modulate:a", 0.45, 0.5)
@@ -200,7 +200,7 @@ func _on_controls_inverted() -> void:
 func _on_controls_restored() -> void:
 	if inverted_indicator:
 		if inverted_label:
-			inverted_label.text = "✅ CONTROLS NORMAL! ✅"
+			inverted_label.text = "CONTROLS NORMAL!"
 		var fade = create_tween()
 		fade.tween_interval(0.8)
 		fade.tween_property(inverted_indicator, "modulate:a", 0.0, 0.35)
@@ -214,7 +214,7 @@ func _on_drunk_warning_started() -> void:
 	if not disclaimer_banner or not countdown_label:
 		return
 	if disclaimer_title:
-		disclaimer_title.text = "🍺 THAT GUY IS DRUNK! 🍺"
+		disclaimer_title.text = "! THAT GUY IS DRUNK !"
 		disclaimer_title.label_settings.font_color = Color("818cf8")
 	if disclaimer_sub:
 		disclaimer_sub.text = "BUFF ACTIVE: +10% JUMP & WOBBLY SWAY!"
@@ -231,23 +231,23 @@ func _on_drunk_warning_started() -> void:
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.tween_property(disclaimer_banner, "scale", Vector2(1.0, 1.0), 0.1)
 	
-	countdown_label.text = "🍺 BUFF IN: 3 🍺"
+	countdown_label.text = "[ BUFF IN: 3 ]"
 	var t1 = get_tree().create_timer(1.0)
 	t1.timeout.connect(func():
 		if is_instance_valid(countdown_label) and GameState.drunk_warning_active:
-			countdown_label.text = "🍺 BUFF IN: 2 🍺"
+			countdown_label.text = "[ BUFF IN: 2 ]"
 			GameState.trigger_effect(&"shake", 3.0)
 	)
 	var t2 = get_tree().create_timer(2.0)
 	t2.timeout.connect(func():
 		if is_instance_valid(countdown_label) and GameState.drunk_warning_active:
-			countdown_label.text = "🍺 BUFF IN: 1 🍺"
+			countdown_label.text = "[ BUFF IN: 1 ]"
 			GameState.trigger_effect(&"shake", 5.0)
 	)
 	var t3 = get_tree().create_timer(3.0)
 	t3.timeout.connect(func():
 		if is_instance_valid(countdown_label):
-			countdown_label.text = "🥴 DRUNK BUFF ENGAGED! 🥴"
+			countdown_label.text = "! DRUNK BUFF ENGAGED !"
 			GameState.trigger_effect(&"shake", 8.0)
 			GameState.trigger_effect(&"screen_flash", Color(0.5, 0.3, 0.9, 0.4))
 		if is_instance_valid(disclaimer_banner):

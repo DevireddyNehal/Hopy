@@ -63,6 +63,6 @@ func _update_mute_button() -> void:
 	var master_idx = AudioServer.get_bus_index("Master")
 	var is_muted = AudioServer.is_bus_mute(master_idx)
 	if is_muted:
-		mute_button.text = "SOUND: MUTED 🔇"
+		mute_button.text = "SOUND: MUTED [OFF]"
 	else:
-		mute_button.text = "SOUND: ON 🔊"
+		mute_button.text = "SOUND: ON"

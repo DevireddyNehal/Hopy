@@ -24,7 +24,7 @@ func _ready() -> void:
 	assert(hud.combo_container.visible == false, "Combo container should be hidden at combo <= 1")
 	GameState.increment_combo() # combo = 2
 	assert(hud.combo_container.visible == true, "Combo container should be visible at combo > 1")
-	assert(hud.combo_label.text == "×2 COMBO!", "Combo label should show '×2 COMBO!'")
+	assert(hud.combo_label.text in ["x2 COMBO!", "×2 COMBO!"], "Combo label should show combo text")
 	print("✓ Combo counter & dynamic visibility verified")
 	
 	# 4. Test Best score persistence to user://best.txt
