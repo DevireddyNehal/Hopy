@@ -90,6 +90,34 @@ func _unhandled_input(event: InputEvent) -> void:
 			var delta_x = event.relative.x
 			swipe_steer = clampf(swipe_steer + (delta_x / 18.0), -1.0, 1.0)
 
+	# 3. GYRO MODE: Hardware orientation/accelerometer + touch fallback
+	elif GameState.control_mode == GameState.ControlMode.GYRO:
+		if event is InputEventScreenTouch:
+			is_swipe_dragging = event.pressed
+			if event.pressed:
+				if event.position.y >= 70.0:
+					button_touches[event.index] = event.position.x
+			else:
+				button_touches.erase(event.index)
+		elif event is InputEventScreenDrag:
+			is_swipe_dragging = true
+			if event.index in button_touches:
+				button_touches[event.index] = event.position.x
+			var delta_x = event.relative.x
+			swipe_steer = clampf(swipe_steer + (delta_x / 18.0), -1.0, 1.0)
+		elif event is InputEventMouseButton:
+			if event.button_index == MOUSE_BUTTON_LEFT:
+				is_swipe_dragging = event.pressed
+				if event.pressed and event.position.y >= 70.0:
+					button_touches[999] = event.position.x
+				else:
+					button_touches.erase(999)
+		elif event is InputEventMouseMotion and is_swipe_dragging:
+			var delta_x = event.relative.x
+			swipe_steer = clampf(swipe_steer + (delta_x / 18.0), -1.0, 1.0)
+			if 999 in button_touches:
+				button_touches[999] = event.position.x
+
 func _process_buttons_input(delta: float) -> void:
 	var left_held = GameState.touch_btn_left
 	var right_held = GameState.touch_btn_right
@@ -129,27 +157,65 @@ func _process_swipe_input(delta: float) -> void:
 
 func _process_gyro_input(delta: float) -> void:
 	var raw_tilt = 0.0
+	var sensor_active = false
+	
+	# 1. Web JavaScript sensor bridge
 	if OS.has_feature("web"):
-		var val = JavaScriptBridge.eval("window.hopyGyro ? window.hopyGyro.tilt : 0.0", true)
+		var val = JavaScriptBridge.eval("window.hopyGetTilt ? window.hopyGetTilt() : (window.hopyGyro ? window.hopyGyro.tilt : 0.0)", true)
 		if val != null and (val is float or val is int):
-			raw_tilt = float(val)
-	else:
-		var grav_x = Input.get_gravity().x
-		var accel_x = Input.get_accelerometer().x
-		var raw_sensor = grav_x if absf(grav_x) > 0.05 else accel_x
-		raw_tilt = raw_sensor * 4.5
-		
-	# Deadzone 2.0 degrees, reach full steer at 22.0 degrees tilt
-	var deadzone = 2.0
-	var max_tilt = 22.0
-	var target_steer = 0.0
-	if absf(raw_tilt) >= deadzone:
-		var eff_tilt = raw_tilt - (signf(raw_tilt) * deadzone)
-		target_steer = clampf(eff_tilt / (max_tilt - deadzone), -1.0, 1.0)
-		
-	# Smooth out accelerometer jitter with responsive lerp
-	gyro_smoothed = lerpf(gyro_smoothed, target_steer, 14.0 * delta)
+			var f_val = float(val)
+			if absf(f_val) > 0.01:
+				raw_tilt = f_val
+				sensor_active = true
+	
+	# 2. Native hardware sensor fallback (Android APK & web fallback)
+	if not sensor_active:
+		var grav = Input.get_gravity()
+		var accel = Input.get_accelerometer()
+		var sensor_x = grav.x if absf(grav.x) > 0.05 else accel.x
+		if absf(sensor_x) > 0.05:
+			# ~6 degrees per m/s^2 on phone in portrait
+			raw_tilt = sensor_x * 6.0
+			sensor_active = true
+
+	# 3. Calculate steering target from physical tilt
+	var tilt_steer = 0.0
+	if sensor_active:
+		var deadzone = 1.5
+		var max_tilt = 18.0
+		if absf(raw_tilt) >= deadzone:
+			var eff_tilt = raw_tilt - (signf(raw_tilt) * deadzone)
+			tilt_steer = clampf(eff_tilt / (max_tilt - deadzone), -1.0, 1.0)
+
+	# 4. Touch/drag fallback: if user touches screen or if sensors blocked in iframe
+	var touch_fallback = 0.0
+	if is_swipe_dragging or absf(swipe_steer) > 0.05:
+		touch_fallback = swipe_steer
+	elif GameState.touch_btn_left or GameState.touch_btn_right or button_touches.size() > 0:
+		var center_x = get_viewport_rect().size.x / 2.0
+		var btn_dir = 0.0
+		if GameState.touch_btn_left: btn_dir -= 1.0
+		if GameState.touch_btn_right: btn_dir += 1.0
+		for idx in button_touches:
+			var x = button_touches[idx]
+			if x < center_x: btn_dir -= 1.0
+			else: btn_dir += 1.0
+		touch_fallback = clampf(btn_dir, -1.0, 1.0)
+
+	# Natural decay for swipe drag when finger is lifted
+	if not is_swipe_dragging:
+		swipe_steer = move_toward(swipe_steer, 0.0, 4.0 * delta)
+
+	# Prioritize physical sensor if actively tilting; fallback to touch if user interacts
+	var final_target = tilt_steer
+	if absf(tilt_steer) < 0.05 and absf(touch_fallback) > 0.01:
+		final_target = touch_fallback
+
+	var lerp_weight = clampf(14.0 * delta, 0.0, 1.0)
+	gyro_smoothed = clampf(lerpf(gyro_smoothed, final_target, lerp_weight), -1.0, 1.0)
 	GameState.mobile_steer = gyro_smoothed
+	GameState.last_gyro_tilt = raw_tilt
+	GameState.is_gyro_hardware_active = sensor_active
 
 func get_effective_gravity() -> float:
 	var diff = clampf(float(GameState.score) / 1000.0, 0.0, 1.0)

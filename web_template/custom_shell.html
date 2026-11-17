@@ -173,72 +173,143 @@ const GODOT_CONFIG = $GODOT_CONFIG;
 const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
 const engine = new Engine(GODOT_CONFIG);
 
-// Hardware Device Orientation / Gyroscope Bridge for Web
-window.hopyGyro = {
-	tilt: 0.0,
-	active: false,
-	init: function() {
-		if (window.hopyGyro.active) return;
-		window.hopyGyro.active = true;
-		
-		function onOrientation(e) {
-			// gamma is left/right tilt in degrees: -90 to +90
-			// In portrait: tilt right is positive, tilt left is negative
-			if (e.gamma !== null && e.gamma !== undefined) {
-				window.hopyGyro.tilt = e.gamma;
+// Hardware Device Orientation / Accelerometer / Gyroscope Bridge for Web
+(function() {
+	var gyroState = {
+		tilt: 0.0,
+		rawX: 0.0,
+		hasOrientation: false,
+		hasMotion: false,
+		permissionGranted: false
+	};
+	window.hopyGyro = gyroState;
+
+	function updateTilt(deg) {
+		if (deg !== null && deg !== undefined && !isNaN(deg)) {
+			gyroState.tilt = Math.max(-90.0, Math.min(90.0, deg));
+		}
+	}
+
+	function handleOrientation(e) {
+		if (e.gamma !== null && e.gamma !== undefined) {
+			gyroState.hasOrientation = true;
+			var angle = (window.screen && window.screen.orientation && window.screen.orientation.angle) || window.orientation || 0;
+			var g = e.gamma;
+			var b = e.beta;
+			if (angle === 90) {
+				updateTilt(b);
+			} else if (angle === -90 || angle === 270) {
+				updateTilt(-b);
+			} else if (angle === 180) {
+				updateTilt(-g);
+			} else {
+				updateTilt(g);
 			}
 		}
-		
-		function onMotion(e) {
-			if (e.accelerationIncludingGravity && window.hopyGyro.tilt === 0.0) {
-				var ax = e.accelerationIncludingGravity.x;
-				if (ax !== null && ax !== undefined) {
-					window.hopyGyro.tilt = ax * 4.5;
+	}
+
+	function handleMotion(e) {
+		var acc = e.accelerationIncludingGravity || e.acceleration;
+		if (acc && acc.x !== null && acc.x !== undefined) {
+			gyroState.hasMotion = true;
+			gyroState.rawX = acc.x;
+			// If deviceorientation is unavailable or flat, derive tilt from accelerometer X
+			// In portrait: tilt right is negative on iOS/standard, or positive on some Android
+			if (!gyroState.hasOrientation || Math.abs(gyroState.tilt) < 0.2) {
+				updateTilt(acc.x * 6.0);
+			}
+		}
+	}
+
+	// 1. Immediately listen on window and document (Android Chrome, Firefox, etc.)
+	try {
+		window.addEventListener('deviceorientation', handleOrientation, true);
+		window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+		window.addEventListener('devicemotion', handleMotion, true);
+		document.addEventListener('deviceorientation', handleOrientation, true);
+		document.addEventListener('devicemotion', handleMotion, true);
+	} catch (err) {}
+
+	// 2. Generic Sensor API for modern Chrome Android
+	if (typeof RelativeOrientationSensor !== 'undefined') {
+		try {
+			var sensor = new RelativeOrientationSensor({ frequency: 60 });
+			sensor.addEventListener('reading', function() {
+				if (sensor.quaternion) {
+					var q = sensor.quaternion;
+					var sinr_cosp = 2 * (q[3] * q[0] + q[1] * q[2]);
+					var cosr_cosp = 1 - 2 * (q[0] * q[0] + q[1] * q[1]);
+					var roll = Math.atan2(sinr_cosp, cosr_cosp) * (180.0 / Math.PI);
+					gyroState.hasOrientation = true;
+					updateTilt(roll);
 				}
-			}
-		}
-		
+			});
+			sensor.start();
+		} catch (err) {}
+	} else if (typeof Accelerometer !== 'undefined') {
+		try {
+			var acl = new Accelerometer({ frequency: 60 });
+			acl.addEventListener('reading', function() {
+				if (acl.x !== null && (!gyroState.hasOrientation || Math.abs(gyroState.tilt) < 0.2)) {
+					gyroState.hasMotion = true;
+					updateTilt(acl.x * 6.0);
+				}
+			});
+			acl.start();
+		} catch (err) {}
+	}
+
+	// 3. User-gesture permission trigger (required by iOS 13+ Safari)
+	window.hopyRequestGyroPermission = function() {
 		if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
 			DeviceOrientationEvent.requestPermission().then(function(state) {
 				if (state === 'granted') {
-					window.addEventListener('deviceorientation', onOrientation, true);
-					window.addEventListener('devicemotion', onMotion, true);
+					gyroState.permissionGranted = true;
+					window.addEventListener('deviceorientation', handleOrientation, true);
+					window.addEventListener('devicemotion', handleMotion, true);
 				}
-			}).catch(function(err) {
-				console.log('Gyro permission:', err);
-			});
-		} else {
-			window.addEventListener('deviceorientation', onOrientation, true);
-			window.addEventListener('devicemotion', onMotion, true);
+			}).catch(function() {});
 		}
-	}
-};
+		if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+			DeviceMotionEvent.requestPermission().then(function(state) {
+				if (state === 'granted') {
+					window.addEventListener('devicemotion', handleMotion, true);
+				}
+			}).catch(function() {});
+		}
+	};
 
-// Request mobile vertical fullscreen and start sensors on first user interaction
-function activateMobileVerticalFullscreen() {
-	if (window.hopyGyro && !window.hopyGyro.active) {
-		window.hopyGyro.init();
-	}
-	const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-		(navigator.maxTouchPoints && navigator.maxTouchPoints > 1 && window.innerHeight > window.innerWidth);
-	if (!isMobile) return;
-	
-	const elem = document.documentElement;
-	if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-		const req = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen;
-		if (req) {
-			req.call(elem).then(() => {
-				if (screen.orientation && screen.orientation.lock) {
-					screen.orientation.lock('portrait').catch(() => {});
-				}
-			}).catch(() => {});
+	window.hopyGetTilt = function() {
+		return gyroState.tilt;
+	};
+
+	// Request mobile vertical fullscreen and trigger sensor permissions on user interaction
+	function onUserInteraction() {
+		window.hopyRequestGyroPermission();
+
+		const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+			(navigator.maxTouchPoints && navigator.maxTouchPoints > 1 && window.innerHeight > window.innerWidth);
+		if (!isMobile) return;
+		
+		const elem = document.documentElement;
+		if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+			const req = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen;
+			if (req) {
+				req.call(elem).then(() => {
+					if (screen.orientation && screen.orientation.lock) {
+						screen.orientation.lock('portrait').catch(() => {});
+					}
+				}).catch(() => {});
+			}
+		} else if (screen.orientation && screen.orientation.lock) {
+			screen.orientation.lock('portrait').catch(() => {});
 		}
-	} else if (screen.orientation && screen.orientation.lock) {
-		screen.orientation.lock('portrait').catch(() => {});
 	}
-}
-window.addEventListener('touchstart', activateMobileVerticalFullscreen, { passive: true });
-window.addEventListener('pointerdown', activateMobileVerticalFullscreen, { passive: true });
+
+	window.addEventListener('touchstart', onUserInteraction, { passive: true });
+	window.addEventListener('pointerdown', onUserInteraction, { passive: true });
+	window.addEventListener('click', onUserInteraction, { passive: true });
+})();
 
 (function () {
 	const statusOverlay = document.getElementById('status');

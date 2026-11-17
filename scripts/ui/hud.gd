@@ -66,9 +66,44 @@ func _ready() -> void:
 	if drunk_indicator:
 		drunk_indicator.visible = false
 
+var gyro_badge: Label = null
+
+func _process(_delta: float) -> void:
+	if GameState.control_mode == GameState.ControlMode.GYRO and GameState.is_game_active:
+		if not gyro_badge:
+			gyro_badge = Label.new()
+			gyro_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			gyro_badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			gyro_badge.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+			gyro_badge.offset_bottom = -25.0
+			gyro_badge.offset_top = -60.0
+			gyro_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			gyro_badge.modulate = Color(0.3, 0.95, 1.0, 0.8)
+			var settings = LabelSettings.new()
+			settings.font_size = 14
+			settings.outline_size = 3
+			settings.outline_color = Color(0, 0, 0, 0.85)
+			gyro_badge.label_settings = settings
+			if has_node("Control"):
+				$Control.add_child(gyro_badge)
+		gyro_badge.visible = true
+		if GameState.is_gyro_hardware_active:
+			var tilt_deg = GameState.last_gyro_tilt
+			var dir_str = "⟵" if tilt_deg < -2.0 else ("⟶" if tilt_deg > 2.0 else "•")
+			gyro_badge.text = "📱 TILT: %+.1f°  %s" % [tilt_deg, dir_str]
+			gyro_badge.modulate = Color(0.3, 0.95, 1.0, 0.8)
+		else:
+			gyro_badge.text = "📱 TILT PHONE (OR TOUCH/DRAG TO STEER)"
+			gyro_badge.modulate = Color(0.7, 0.85, 1.0, 0.6)
+	else:
+		if gyro_badge:
+			gyro_badge.visible = false
+
 func _on_control_mode_changed(new_mode: int) -> void:
 	if touch_controls:
 		touch_controls.visible = (new_mode == GameState.ControlMode.BUTTONS)
+	if gyro_badge:
+		gyro_badge.visible = (new_mode == GameState.ControlMode.GYRO and GameState.is_game_active)
 
 func _on_score_changed(new_score: int) -> void:
 	if score_label:

@@ -80,6 +80,8 @@ var control_mode: int = ControlMode.BUTTONS
 var mobile_steer: float = 0.0
 var touch_btn_left: bool = false
 var touch_btn_right: bool = false
+var last_gyro_tilt: float = 0.0
+var is_gyro_hardware_active: bool = false
 
 func get_control_mode_name(mode: int = -1) -> String:
 	var m = control_mode if mode == -1 else mode
@@ -104,7 +106,7 @@ func set_control_mode(mode: int) -> void:
 	touch_btn_left = false
 	touch_btn_right = false
 	if control_mode == ControlMode.GYRO and OS.has_feature("web"):
-		JavaScriptBridge.eval("window.hopyGyro && window.hopyGyro.init()", true)
+		JavaScriptBridge.eval("window.hopyRequestGyroPermission && window.hopyRequestGyroPermission()", true)
 	save_control_mode()
 	control_mode_changed.emit(control_mode)
 
