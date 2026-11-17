@@ -286,7 +286,7 @@ func _ready() -> void:
 	GameState.cycle_control_mode()
 	assert(GameState.control_mode == GameState.ControlMode.BUTTONS, "Mode should cycle back to BUTTONS")
 	
-	# 14.2: BUTTONS mode steering
+	# 14.2: BUTTONS mode steering & tap buffer
 	GameState.set_touch_button(true, true)
 	assert(GameState.mobile_steer == -1.0, "Left touch button should steer -1.0")
 	GameState.set_touch_button(true, false)
@@ -296,25 +296,50 @@ func _ready() -> void:
 	GameState.set_touch_button(false, false)
 	assert(GameState.mobile_steer == 0.0, "Releasing right button should reset steer to 0.0")
 	
-	# 14.3: SWIPE mode drag calculation
 	var test_robot = preload("res://scenes/Robot.tscn").instantiate()
 	add_child(test_robot)
+	GameState.set_control_mode(GameState.ControlMode.BUTTONS)
+	
+	# Simulate quick tap on left half of screen (e.g. x = 120)
+	var touch_down = InputEventScreenTouch.new()
+	touch_down.index = 0
+	touch_down.pressed = true
+	touch_down.position = Vector2(120, 300)
+	test_robot._unhandled_input(touch_down)
+	assert(test_robot.tap_steer_dir == -1.0, "Tap on left screen half should set tap direction to -1.0")
+	assert(test_robot.tap_steer_timer > 0.0, "Tap should initiate tap steer timer")
+	
+	# Simulate immediate touch release (short tap)
+	var touch_up = InputEventScreenTouch.new()
+	touch_up.index = 0
+	touch_up.pressed = false
+	touch_up.position = Vector2(120, 300)
+	test_robot._unhandled_input(touch_up)
+	test_robot._process_buttons_input(0.05) # 50ms later
+	assert(GameState.mobile_steer < 0.0, "Short tap must maintain steering impulse via tap buffer")
+	
+	# 14.3: SWIPE mode drag calculation & glide momentum
 	GameState.set_control_mode(GameState.ControlMode.SWIPE)
-	test_robot.swipe_active = true
-	test_robot.swipe_start_x = 200.0
-	test_robot.swipe_current_x = 270.0
-	test_robot._update_swipe_steer()
-	assert(is_equal_approx(GameState.mobile_steer, 1.0), "Dragging right should produce +1.0 steer")
-	test_robot.swipe_current_x = 130.0
-	test_robot._update_swipe_steer()
-	assert(is_equal_approx(GameState.mobile_steer, -1.0), "Dragging left should produce -1.0 steer")
-	test_robot.swipe_current_x = 204.0 # diff 4 < 8px deadzone
-	test_robot._update_swipe_steer()
-	assert(GameState.mobile_steer == 0.0, "Drag within deadzone should produce 0.0 steer")
+	var drag_right = InputEventScreenDrag.new()
+	drag_right.relative = Vector2(36.0, 0.0) # flick right
+	test_robot._unhandled_input(drag_right)
+	assert(test_robot.swipe_steer > 0.5, "Flicking right should give instant positive swipe steer")
+	
+	# Instant reversal: flick left
+	var drag_left = InputEventScreenDrag.new()
+	drag_left.relative = Vector2(-72.0, 0.0)
+	test_robot._unhandled_input(drag_left)
+	assert(test_robot.swipe_steer < 0.0, "Flicking left should instantly reverse swipe steer")
+	
+	# Glide deceleration when finger lifts
+	test_robot.is_swipe_dragging = false
+	var initial_swipe = test_robot.swipe_steer
+	test_robot._process_swipe_input(0.1) # 100ms glide
+	assert(absf(test_robot.swipe_steer) < absf(initial_swipe), "Swipe must smoothly glide and decelerate")
 	
 	# 14.4: GYRO mode handling
 	GameState.set_control_mode(GameState.ControlMode.GYRO)
-	test_robot._process_gyro_input()
+	test_robot._process_gyro_input(0.1)
 	assert(GameState.mobile_steer >= -1.0 and GameState.mobile_steer <= 1.0, "Gyro steer must be clamped [-1.0, 1.0]")
 	test_robot.queue_free()
 	

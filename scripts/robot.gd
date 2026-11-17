@@ -26,11 +26,15 @@ var is_falling_death: bool = false
 var last_bounce_time: float = -10.0
 var drunk_timer: float = 0.0
 
-# Mobile swipe / drag tracking
-var swipe_active: bool = false
-var swipe_start_x: float = 0.0
-var swipe_current_x: float = 0.0
-var swipe_touch_id: int = -1
+# Mobile input tracking state
+var button_touches: Dictionary = {}
+var tap_steer_timer: float = 0.0
+var tap_steer_dir: float = 0.0
+
+var swipe_steer: float = 0.0
+var is_swipe_dragging: bool = false
+
+var gyro_smoothed: float = 0.0
 
 func _ready() -> void:
 	add_to_group("robot")
@@ -44,61 +48,108 @@ func _unhandled_input(event: InputEvent) -> void:
 	if is_dead or is_falling_death:
 		return
 		
-	# Swipe / Drag steering mode
-	if GameState.control_mode == GameState.ControlMode.SWIPE:
+	# 1. BUTTONS MODE: Screen-half touch zones + virtual button support + tap burst
+	if GameState.control_mode == GameState.ControlMode.BUTTONS:
 		if event is InputEventScreenTouch:
 			if event.pressed:
-				swipe_active = true
-				swipe_touch_id = event.index
-				swipe_start_x = event.position.x
-				swipe_current_x = event.position.x
-			elif event.index == swipe_touch_id:
-				swipe_active = false
-				swipe_touch_id = -1
-				GameState.mobile_steer = 0.0
-		elif event is InputEventScreenDrag and event.index == swipe_touch_id:
-			swipe_current_x = event.position.x
-			_update_swipe_steer()
+				# Exclude the top HUD area (pause button)
+				if event.position.y >= 70.0:
+					button_touches[event.index] = event.position.x
+					var center_x = get_viewport_rect().size.x / 2.0
+					tap_steer_dir = -1.0 if event.position.x < center_x else 1.0
+					tap_steer_timer = 0.20
+			else:
+				button_touches.erase(event.index)
+		elif event is InputEventScreenDrag:
+			if event.index in button_touches:
+				button_touches[event.index] = event.position.x
 		elif event is InputEventMouseButton:
 			if event.button_index == MOUSE_BUTTON_LEFT:
-				if event.pressed:
-					swipe_active = true
-					swipe_touch_id = 999
-					swipe_start_x = event.position.x
-					swipe_current_x = event.position.x
+				if event.pressed and event.position.y >= 70.0:
+					button_touches[999] = event.position.x
+					var center_x = get_viewport_rect().size.x / 2.0
+					tap_steer_dir = -1.0 if event.position.x < center_x else 1.0
+					tap_steer_timer = 0.20
 				else:
-					swipe_active = false
-					swipe_touch_id = -1
-					GameState.mobile_steer = 0.0
-		elif event is InputEventMouseMotion and swipe_active and swipe_touch_id == 999:
-			swipe_current_x = event.position.x
-			_update_swipe_steer()
+					button_touches.erase(999)
+		elif event is InputEventMouseMotion and 999 in button_touches:
+			button_touches[999] = event.position.x
 
-func _update_swipe_steer() -> void:
-	var diff_x = swipe_current_x - swipe_start_x
-	var deadzone = 8.0
-	var max_drag = 65.0
-	if absf(diff_x) < deadzone:
-		GameState.mobile_steer = 0.0
-	else:
-		var effective_diff = diff_x - (signf(diff_x) * deadzone)
-		GameState.mobile_steer = clampf(effective_diff / (max_drag - deadzone), -1.0, 1.0)
+	# 2. SWIPE MODE: Relative flick velocity with natural glide deceleration
+	elif GameState.control_mode == GameState.ControlMode.SWIPE:
+		if event is InputEventScreenTouch:
+			is_swipe_dragging = event.pressed
+		elif event is InputEventScreenDrag:
+			is_swipe_dragging = true
+			var delta_x = event.relative.x
+			swipe_steer = clampf(swipe_steer + (delta_x / 18.0), -1.0, 1.0)
+		elif event is InputEventMouseButton:
+			if event.button_index == MOUSE_BUTTON_LEFT:
+				is_swipe_dragging = event.pressed
+		elif event is InputEventMouseMotion and is_swipe_dragging:
+			var delta_x = event.relative.x
+			swipe_steer = clampf(swipe_steer + (delta_x / 18.0), -1.0, 1.0)
 
-func _process_gyro_input() -> void:
-	# Gravity sensor provides filtered accelerometer data on devices that support it;
-	# fallback to raw accelerometer if gravity vector is zero or unavailable.
-	var grav_x = Input.get_gravity().x
-	var accel_x = Input.get_accelerometer().x
-	var raw_tilt = grav_x if absf(grav_x) > 0.05 else accel_x
-	
-	# Deadzone of 0.35 m/s^2, reaches full steer at 3.5 m/s^2
-	var deadzone = 0.35
-	var max_tilt = 3.5
-	if absf(raw_tilt) < deadzone:
-		GameState.mobile_steer = 0.0
+func _process_buttons_input(delta: float) -> void:
+	var left_held = GameState.touch_btn_left
+	var right_held = GameState.touch_btn_right
+	var center_x = get_viewport_rect().size.x / 2.0
+	for idx in button_touches:
+		var x = button_touches[idx]
+		if x < center_x:
+			left_held = true
+		else:
+			right_held = true
+			
+	var held_steer = 0.0
+	if left_held:
+		held_steer -= 1.0
+	if right_held:
+		held_steer += 1.0
+		
+	if held_steer != 0.0:
+		tap_steer_dir = held_steer
+		tap_steer_timer = 0.20
+		GameState.mobile_steer = held_steer
+	elif tap_steer_timer > 0.0:
+		tap_steer_timer -= delta
+		var strength = clampf(tap_steer_timer / 0.20, 0.0, 1.0)
+		GameState.mobile_steer = tap_steer_dir * strength
 	else:
-		var effective_tilt = raw_tilt - (signf(raw_tilt) * deadzone)
-		GameState.mobile_steer = clampf(effective_tilt / (max_tilt - deadzone), -1.0, 1.0)
+		GameState.mobile_steer = 0.0
+
+func _process_swipe_input(delta: float) -> void:
+	if not is_swipe_dragging:
+		# Smooth natural glide deceleration after flick release (glide over ~0.25s)
+		swipe_steer = move_toward(swipe_steer, 0.0, 3.8 * delta)
+	else:
+		# Settle if finger is resting on screen without moving
+		swipe_steer = move_toward(swipe_steer, 0.0, 2.2 * delta)
+	GameState.mobile_steer = swipe_steer
+
+func _process_gyro_input(delta: float) -> void:
+	var raw_tilt = 0.0
+	if OS.has_feature("web"):
+		var val = JavaScriptBridge.eval("window.hopyGyro ? window.hopyGyro.tilt : 0.0", true)
+		if val != null and (val is float or val is int):
+			raw_tilt = float(val)
+	else:
+		var grav_x = Input.get_gravity().x
+		var accel_x = Input.get_accelerometer().x
+		var raw_sensor = grav_x if absf(grav_x) > 0.05 else accel_x
+		raw_tilt = raw_sensor * 4.5
+		
+	# Deadzone 2.0 degrees, reach full steer at 22.0 degrees tilt
+	var deadzone = 2.0
+	var max_tilt = 22.0
+	var target_steer = 0.0
+	if absf(raw_tilt) >= deadzone:
+		var eff_tilt = raw_tilt - (signf(raw_tilt) * deadzone)
+		target_steer = clampf(eff_tilt / (max_tilt - deadzone), -1.0, 1.0)
+		
+	# Smooth out accelerometer jitter with responsive lerp
+	gyro_smoothed = lerpf(gyro_smoothed, target_steer, 14.0 * delta)
+	GameState.mobile_steer = gyro_smoothed
 
 func get_effective_gravity() -> float:
 	var diff = clampf(float(GameState.score) / 1000.0, 0.0, 1.0)
@@ -141,9 +192,13 @@ func _physics_process(delta: float) -> void:
 	if thruster:
 		thruster.visible = (velocity.y < -120.0)
 	
-	# 2. Gyro mode tilt processing
-	if GameState.control_mode == GameState.ControlMode.GYRO:
-		_process_gyro_input()
+	# 2. Update Mobile Controls based on active mode
+	if GameState.control_mode == GameState.ControlMode.BUTTONS:
+		_process_buttons_input(delta)
+	elif GameState.control_mode == GameState.ControlMode.SWIPE:
+		_process_swipe_input(delta)
+	elif GameState.control_mode == GameState.ControlMode.GYRO:
+		_process_gyro_input(delta)
 	
 	# 3. Horizontal steering via keyboard (ui_left / ui_right) or selected mobile control
 	var kb_steer = Input.get_axis("ui_left", "ui_right")

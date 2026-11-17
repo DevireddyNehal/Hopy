@@ -173,8 +173,52 @@ const GODOT_CONFIG = $GODOT_CONFIG;
 const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
 const engine = new Engine(GODOT_CONFIG);
 
-// Request mobile vertical fullscreen on first user interaction
+// Hardware Device Orientation / Gyroscope Bridge for Web
+window.hopyGyro = {
+	tilt: 0.0,
+	active: false,
+	init: function() {
+		if (window.hopyGyro.active) return;
+		window.hopyGyro.active = true;
+		
+		function onOrientation(e) {
+			// gamma is left/right tilt in degrees: -90 to +90
+			// In portrait: tilt right is positive, tilt left is negative
+			if (e.gamma !== null && e.gamma !== undefined) {
+				window.hopyGyro.tilt = e.gamma;
+			}
+		}
+		
+		function onMotion(e) {
+			if (e.accelerationIncludingGravity && window.hopyGyro.tilt === 0.0) {
+				var ax = e.accelerationIncludingGravity.x;
+				if (ax !== null && ax !== undefined) {
+					window.hopyGyro.tilt = ax * 4.5;
+				}
+			}
+		}
+		
+		if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+			DeviceOrientationEvent.requestPermission().then(function(state) {
+				if (state === 'granted') {
+					window.addEventListener('deviceorientation', onOrientation, true);
+					window.addEventListener('devicemotion', onMotion, true);
+				}
+			}).catch(function(err) {
+				console.log('Gyro permission:', err);
+			});
+		} else {
+			window.addEventListener('deviceorientation', onOrientation, true);
+			window.addEventListener('devicemotion', onMotion, true);
+		}
+	}
+};
+
+// Request mobile vertical fullscreen and start sensors on first user interaction
 function activateMobileVerticalFullscreen() {
+	if (window.hopyGyro && !window.hopyGyro.active) {
+		window.hopyGyro.init();
+	}
 	const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
 		(navigator.maxTouchPoints && navigator.maxTouchPoints > 1 && window.innerHeight > window.innerWidth);
 	if (!isMobile) return;
