@@ -318,7 +318,8 @@ func _ready() -> void:
 	assert(GameState.mobile_steer >= -1.0 and GameState.mobile_steer <= 1.0, "Gyro steer must be clamped [-1.0, 1.0]")
 	test_robot.queue_free()
 	
-	# 14.5: Computer / PC compatibility preservation
+	# 14.5: Computer / PC compatibility preservation & Handheld Orientation
+	assert(ProjectSettings.get_setting("display/window/handheld/orientation") == 1, "Handheld orientation must be set to Portrait (1)")
 	assert(InputMap.has_action("ui_left"), "PC action ui_left must remain mapped")
 	assert(InputMap.has_action("ui_right"), "PC action ui_right must remain mapped")
 	assert(InputMap.has_action("start_action"), "PC action start_action must remain mapped")

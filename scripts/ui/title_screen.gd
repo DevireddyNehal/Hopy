@@ -51,6 +51,11 @@ func _start_game() -> void:
 	if is_starting:
 		return
 	is_starting = true
+	# Ensure vertical portrait orientation and enter fullscreen on mobile platforms
+	DisplayServer.screen_set_orientation(DisplayServer.SCREEN_PORTRAIT)
+	if OS.has_feature("mobile") or OS.has_feature("web_android") or OS.has_feature("web_ios"):
+		if DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_FULLSCREEN:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	# Play starting meme audio unlock (Chaliye shuru karte hain!)
 	GameState.play_start_game()
 	get_tree().change_scene_to_file("res://scenes/Main.tscn")
