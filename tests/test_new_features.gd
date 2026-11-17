@@ -274,5 +274,73 @@ func _ready() -> void:
 	erratic_plat.queue_free()
 	print("✓ Movable spikes past 500 and cyclic erratic platform waves verified")
 	
+	# Test 14: Mobile Controls (BUTTONS, SWIPE, GYRO) & Computer Compatibility Preservation
+	# 14.1: Modes and Cycling
+	GameState.set_control_mode(GameState.ControlMode.BUTTONS)
+	assert(GameState.control_mode == GameState.ControlMode.BUTTONS, "Control mode should be BUTTONS")
+	assert(GameState.get_control_mode_name() == "BUTTONS", "Mode name should be BUTTONS")
+	GameState.cycle_control_mode()
+	assert(GameState.control_mode == GameState.ControlMode.SWIPE, "Mode should cycle to SWIPE")
+	GameState.cycle_control_mode()
+	assert(GameState.control_mode == GameState.ControlMode.GYRO, "Mode should cycle to GYRO")
+	GameState.cycle_control_mode()
+	assert(GameState.control_mode == GameState.ControlMode.BUTTONS, "Mode should cycle back to BUTTONS")
+	
+	# 14.2: BUTTONS mode steering
+	GameState.set_touch_button(true, true)
+	assert(GameState.mobile_steer == -1.0, "Left touch button should steer -1.0")
+	GameState.set_touch_button(true, false)
+	assert(GameState.mobile_steer == 0.0, "Releasing left button should reset steer to 0.0")
+	GameState.set_touch_button(false, true)
+	assert(GameState.mobile_steer == 1.0, "Right touch button should steer 1.0")
+	GameState.set_touch_button(false, false)
+	assert(GameState.mobile_steer == 0.0, "Releasing right button should reset steer to 0.0")
+	
+	# 14.3: SWIPE mode drag calculation
+	var test_robot = preload("res://scenes/Robot.tscn").instantiate()
+	add_child(test_robot)
+	GameState.set_control_mode(GameState.ControlMode.SWIPE)
+	test_robot.swipe_active = true
+	test_robot.swipe_start_x = 200.0
+	test_robot.swipe_current_x = 270.0
+	test_robot._update_swipe_steer()
+	assert(is_equal_approx(GameState.mobile_steer, 1.0), "Dragging right should produce +1.0 steer")
+	test_robot.swipe_current_x = 130.0
+	test_robot._update_swipe_steer()
+	assert(is_equal_approx(GameState.mobile_steer, -1.0), "Dragging left should produce -1.0 steer")
+	test_robot.swipe_current_x = 204.0 # diff 4 < 8px deadzone
+	test_robot._update_swipe_steer()
+	assert(GameState.mobile_steer == 0.0, "Drag within deadzone should produce 0.0 steer")
+	
+	# 14.4: GYRO mode handling
+	GameState.set_control_mode(GameState.ControlMode.GYRO)
+	test_robot._process_gyro_input()
+	assert(GameState.mobile_steer >= -1.0 and GameState.mobile_steer <= 1.0, "Gyro steer must be clamped [-1.0, 1.0]")
+	test_robot.queue_free()
+	
+	# 14.5: Computer / PC compatibility preservation
+	assert(InputMap.has_action("ui_left"), "PC action ui_left must remain mapped")
+	assert(InputMap.has_action("ui_right"), "PC action ui_right must remain mapped")
+	assert(InputMap.has_action("start_action"), "PC action start_action must remain mapped")
+	assert(InputMap.has_action("pause_action"), "PC action pause_action must remain mapped")
+	
+	# 14.6: HUD Touch Controls visibility toggling
+	var mob_hud = preload("res://scenes/HUD.tscn").instantiate()
+	add_child(mob_hud)
+	var hud_touch = mob_hud.get_node_or_null("%TouchControls")
+	var hud_pause = mob_hud.get_node_or_null("%PauseButton")
+	assert(hud_touch != null, "HUD must contain TouchControls")
+	assert(hud_pause != null, "HUD must contain PauseButton")
+	GameState.set_control_mode(GameState.ControlMode.BUTTONS)
+	assert(hud_touch.visible, "TouchControls must be visible in BUTTONS mode")
+	GameState.set_control_mode(GameState.ControlMode.SWIPE)
+	assert(not hud_touch.visible, "TouchControls must be hidden in SWIPE mode")
+	GameState.set_control_mode(GameState.ControlMode.GYRO)
+	assert(not hud_touch.visible, "TouchControls must be hidden in GYRO mode")
+	GameState.set_control_mode(GameState.ControlMode.BUTTONS)
+	assert(hud_touch.visible, "TouchControls must be visible when returning to BUTTONS mode")
+	mob_hud.queue_free()
+	print("✓ Mobile controls (BUTTONS, SWIPE, GYRO) and PC compatibility preservation verified")
+	
 	print("--- ALL NEW FEATURE TESTS PASSED SUCCESSFULLY! ---\n")
 	get_tree().quit(0)

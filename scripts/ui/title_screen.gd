@@ -4,11 +4,19 @@ extends Control
 @onready var best_label: Label = %BestLabel
 @onready var start_prompt: Label = %StartPrompt
 @onready var play_button: Button = %PlayButton
+@onready var control_mode_button: Button = %ControlModeButton if has_node("%ControlModeButton") else null
+@onready var controls_info: Label = %ControlsInfo if has_node("%ControlsInfo") else null
 
 var is_starting: bool = false
 
 func _ready() -> void:
 	GameState.load_best_score()
+	GameState.load_control_mode()
+	GameState.control_mode_changed.connect(_update_control_mode_display)
+	_update_control_mode_display(GameState.control_mode)
+	
+	if control_mode_button:
+		control_mode_button.pressed.connect(func(): GameState.cycle_control_mode())
 	if best_label:
 		if GameState.best_score > 0:
 			best_label.text = "BEST RECORD: " + str(GameState.best_score)
@@ -46,3 +54,10 @@ func _start_game() -> void:
 	# Play starting meme audio unlock (Chaliye shuru karte hain!)
 	GameState.play_start_game()
 	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+
+func _update_control_mode_display(mode: int) -> void:
+	var mode_name = GameState.get_control_mode_name(mode)
+	if control_mode_button:
+		control_mode_button.text = "MOBILE MODE: " + mode_name
+	if controls_info:
+		controls_info.text = "PC: [A][D]/[ARROWS] | MOBILE: " + mode_name

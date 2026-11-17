@@ -101,10 +101,11 @@ theme_override_constants/separation = 6
 alignment = 1
 
 [node name="ControlsInfo" type="Label" parent="Center/VBox/InstructionsPanel/Margin/InfoVBox"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
-theme_override_font_sizes/font_size = 16
-text = "CONTROLS: [A] [D] or [LEFT] [RIGHT] to Steer"
+theme_override_font_sizes/font_size = 15
+text = "PC: [A][D] or [ARROWS] | MOBILE: BUTTONS"
 horizontal_alignment = 1
 
 [node name="WrapInfo" type="Label" parent="Center/VBox/InstructionsPanel/Margin/InfoVBox"]
@@ -120,6 +121,16 @@ theme_override_colors/font_color = Color(1, 0.8, 0.4, 1)
 theme_override_font_sizes/font_size = 13
 text = "Ride Rainbows for Mega Bounces | Avoid Thorn Spikes!"
 horizontal_alignment = 1
+
+[node name="ControlModeButton" type="Button" parent="Center/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 38)
+layout_mode = 2
+size_flags_horizontal = 4
+focus_mode = 0
+theme_override_colors/font_color = Color(0, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "MOBILE MODE: BUTTONS"
 
 [node name="StartPrompt" type="Label" parent="Center/VBox"]
 unique_name_in_owner = true

@@ -37,9 +37,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -180.0
-offset_top = -160.0
+offset_top = -190.0
 offset_right = 180.0
-offset_bottom = 160.0
+offset_bottom = 190.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_pause")
@@ -83,6 +83,15 @@ size_flags_horizontal = 4
 focus_mode = 0
 theme_override_font_sizes/font_size = 18
 text = "RESTART"
+
+[node name="ControlModeButton" type="Button" parent="Panel/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 42)
+layout_mode = 2
+size_flags_horizontal = 4
+focus_mode = 0
+theme_override_font_sizes/font_size = 18
+text = "CONTROL: BUTTONS"
 
 [node name="MuteButton" type="Button" parent="Panel/Margin/VBox"]
 unique_name_in_owner = true

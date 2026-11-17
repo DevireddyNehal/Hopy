@@ -11,7 +11,10 @@ func _ready() -> void:
 	assert(title_screen.title_label.text == "HOPY", "Title must be HOPY")
 	assert(title_screen.play_button != null, "Play button must exist")
 	assert(title_screen.start_prompt != null, "Start prompt must exist")
-	print("✓ TitleScreen UI nodes verified (Title: HOPY, Best Score, Controls Card)")
+	assert(title_screen.control_mode_button != null, "Control mode button must exist on TitleScreen")
+	GameState.set_control_mode(GameState.ControlMode.BUTTONS)
+	assert(title_screen.control_mode_button.text == "MOBILE MODE: BUTTONS", "Title control mode button must reflect mode")
+	print("✓ TitleScreen UI nodes verified (Title: HOPY, Best Score, Controls Card, Mobile Mode)")
 	
 	print("--- TITLE SCREEN TESTS PASSED SUCCESSFULLY! ---\n")
 	get_tree().quit(0)

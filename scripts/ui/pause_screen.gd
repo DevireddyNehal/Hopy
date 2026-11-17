@@ -3,6 +3,7 @@ extends CanvasLayer
 @onready var panel: PanelContainer = %Panel
 @onready var resume_button: Button = %ResumeButton
 @onready var restart_button: Button = %RestartButton
+@onready var control_mode_button: Button = %ControlModeButton if has_node("%ControlModeButton") else null
 @onready var mute_button: Button = %MuteButton
 
 var is_paused: bool = false
@@ -11,13 +12,32 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible = false
 	
+	GameState.pause_requested.connect(func():
+		if not GameState.is_game_active:
+			return
+		if is_paused:
+			resume_game()
+		else:
+			pause_game()
+	)
+	
+	GameState.control_mode_changed.connect(_update_control_mode_button)
+	
 	if resume_button:
 		resume_button.pressed.connect(resume_game)
 	if restart_button:
 		restart_button.pressed.connect(restart_game)
+	if control_mode_button:
+		control_mode_button.pressed.connect(func(): GameState.cycle_control_mode())
+		_update_control_mode_button(GameState.control_mode)
 	if mute_button:
 		mute_button.pressed.connect(toggle_mute)
 		_update_mute_button()
+
+func _update_control_mode_button(mode: int) -> void:
+	if not control_mode_button:
+		return
+	control_mode_button.text = "CONTROL: " + GameState.get_control_mode_name(mode)
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause_action"):

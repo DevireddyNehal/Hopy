@@ -66,6 +66,81 @@ signal controls_inverted_warning_started()     # Fired when 3s inversion warning
 signal controls_inverted()                     # Fired when controls invert for 5s
 signal controls_restored()                     # Fired when controls return to normal
 
+# ==============================================================================
+# MOBILE CONTROL SETTINGS (BUTTONS, SWIPE, GYRO)
+# ==============================================================================
+enum ControlMode { BUTTONS, SWIPE, GYRO }
+
+const CONTROL_MODE_PATH: String = "user://control_mode.txt"
+
+signal control_mode_changed(new_mode: int)
+signal pause_requested()
+
+var control_mode: int = ControlMode.BUTTONS
+var mobile_steer: float = 0.0
+var touch_btn_left: bool = false
+var touch_btn_right: bool = false
+
+func get_control_mode_name(mode: int = -1) -> String:
+	var m = control_mode if mode == -1 else mode
+	match m:
+		ControlMode.BUTTONS:
+			return "BUTTONS"
+		ControlMode.SWIPE:
+			return "SWIPE"
+		ControlMode.GYRO:
+			return "GYRO"
+		_:
+			return "BUTTONS"
+
+func cycle_control_mode() -> int:
+	var next_mode = (control_mode + 1) % 3
+	set_control_mode(next_mode)
+	return control_mode
+
+func set_control_mode(mode: int) -> void:
+	control_mode = clampi(mode, 0, 2)
+	mobile_steer = 0.0
+	touch_btn_left = false
+	touch_btn_right = false
+	save_control_mode()
+	control_mode_changed.emit(control_mode)
+
+func load_control_mode() -> void:
+	if FileAccess.file_exists(CONTROL_MODE_PATH):
+		var file = FileAccess.open(CONTROL_MODE_PATH, FileAccess.READ)
+		if file:
+			var content = file.get_as_text().strip_edges()
+			if content.is_valid_int():
+				var loaded = int(content)
+				if loaded in [ControlMode.BUTTONS, ControlMode.SWIPE, ControlMode.GYRO]:
+					control_mode = loaded
+			file.close()
+	control_mode_changed.emit(control_mode)
+
+func save_control_mode() -> void:
+	var file = FileAccess.open(CONTROL_MODE_PATH, FileAccess.WRITE)
+	if file:
+		file.store_string(str(control_mode))
+		file.close()
+
+func set_touch_button(is_left: bool, is_down: bool) -> void:
+	if is_left:
+		touch_btn_left = is_down
+	else:
+		touch_btn_right = is_down
+	
+	if control_mode == ControlMode.BUTTONS:
+		var steer = 0.0
+		if touch_btn_left:
+			steer -= 1.0
+		if touch_btn_right:
+			steer += 1.0
+		mobile_steer = steer
+
+func request_pause() -> void:
+	pause_requested.emit()
+
 const BEST_SCORE_PATH: String = "user://best.txt"
 
 # Color schemes: [Background color, Primary accent, Secondary accent] for biome transitions
@@ -94,6 +169,7 @@ func _ready() -> void:
 	_setup_inputs()
 	_load_audio_and_data()
 	load_best_score()
+	load_control_mode()
 
 var bounce_sounds: Array[AudioStream] = []
 
@@ -350,6 +426,9 @@ func start_game() -> void:
 	drunk_warning_active = false
 	are_controls_inverted = false
 	controls_warning_active = false
+	mobile_steer = 0.0
+	touch_btn_left = false
+	touch_btn_right = false
 	is_game_active = true
 	score_changed.emit(score)
 	combo_changed.emit(combo)

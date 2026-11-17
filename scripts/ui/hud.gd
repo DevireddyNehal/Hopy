@@ -21,6 +21,10 @@ var milestone_tween: Tween
 @onready var inverted_indicator: PanelContainer = %InvertedIndicator if has_node("%InvertedIndicator") else null
 @onready var inverted_label: Label = %InvertedLabel if has_node("%InvertedLabel") else null
 @onready var drunk_indicator: PanelContainer = %DrunkIndicator if has_node("%DrunkIndicator") else null
+@onready var pause_button: Button = %PauseButton if has_node("%PauseButton") else null
+@onready var touch_controls: Control = %TouchControls if has_node("%TouchControls") else null
+@onready var touch_left: Button = %TouchLeft if has_node("%TouchLeft") else null
+@onready var touch_right: Button = %TouchRight if has_node("%TouchRight") else null
 
 func _ready() -> void:
 	GameState.score_changed.connect(_on_score_changed)
@@ -33,11 +37,24 @@ func _ready() -> void:
 	GameState.controls_restored.connect(_on_controls_restored)
 	GameState.drunk_warning_started.connect(_on_drunk_warning_started)
 	GameState.drunk_activated.connect(_on_drunk_activated)
+	GameState.control_mode_changed.connect(_on_control_mode_changed)
+	
+	if pause_button:
+		pause_button.pressed.connect(func(): GameState.request_pause())
+		
+	if touch_left:
+		touch_left.button_down.connect(func(): GameState.set_touch_button(true, true))
+		touch_left.button_up.connect(func(): GameState.set_touch_button(true, false))
+		
+	if touch_right:
+		touch_right.button_down.connect(func(): GameState.set_touch_button(false, true))
+		touch_right.button_up.connect(func(): GameState.set_touch_button(false, false))
 	
 	# Initial values
 	_on_score_changed(GameState.score)
 	_on_combo_changed(GameState.combo)
 	_on_best_score_changed(GameState.best_score)
+	_on_control_mode_changed(GameState.control_mode)
 	if meme_card:
 		meme_card.visible = false
 	if milestone_banner:
@@ -48,6 +65,10 @@ func _ready() -> void:
 		inverted_indicator.visible = false
 	if drunk_indicator:
 		drunk_indicator.visible = false
+
+func _on_control_mode_changed(new_mode: int) -> void:
+	if touch_controls:
+		touch_controls.visible = (new_mode == GameState.ControlMode.BUTTONS)
 
 func _on_score_changed(new_score: int) -> void:
 	if score_label:

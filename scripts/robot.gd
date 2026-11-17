@@ -26,6 +26,12 @@ var is_falling_death: bool = false
 var last_bounce_time: float = -10.0
 var drunk_timer: float = 0.0
 
+# Mobile swipe / drag tracking
+var swipe_active: bool = false
+var swipe_start_x: float = 0.0
+var swipe_current_x: float = 0.0
+var swipe_touch_id: int = -1
+
 func _ready() -> void:
 	add_to_group("robot")
 	# Initialize base scale
@@ -33,6 +39,66 @@ func _ready() -> void:
 	# Launch upward on start/restart like classic Doodle Jump!
 	velocity.y = bounce_velocity
 	_play_squash_and_stretch()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if is_dead or is_falling_death:
+		return
+		
+	# Swipe / Drag steering mode
+	if GameState.control_mode == GameState.ControlMode.SWIPE:
+		if event is InputEventScreenTouch:
+			if event.pressed:
+				swipe_active = true
+				swipe_touch_id = event.index
+				swipe_start_x = event.position.x
+				swipe_current_x = event.position.x
+			elif event.index == swipe_touch_id:
+				swipe_active = false
+				swipe_touch_id = -1
+				GameState.mobile_steer = 0.0
+		elif event is InputEventScreenDrag and event.index == swipe_touch_id:
+			swipe_current_x = event.position.x
+			_update_swipe_steer()
+		elif event is InputEventMouseButton:
+			if event.button_index == MOUSE_BUTTON_LEFT:
+				if event.pressed:
+					swipe_active = true
+					swipe_touch_id = 999
+					swipe_start_x = event.position.x
+					swipe_current_x = event.position.x
+				else:
+					swipe_active = false
+					swipe_touch_id = -1
+					GameState.mobile_steer = 0.0
+		elif event is InputEventMouseMotion and swipe_active and swipe_touch_id == 999:
+			swipe_current_x = event.position.x
+			_update_swipe_steer()
+
+func _update_swipe_steer() -> void:
+	var diff_x = swipe_current_x - swipe_start_x
+	var deadzone = 8.0
+	var max_drag = 65.0
+	if absf(diff_x) < deadzone:
+		GameState.mobile_steer = 0.0
+	else:
+		var effective_diff = diff_x - (signf(diff_x) * deadzone)
+		GameState.mobile_steer = clampf(effective_diff / (max_drag - deadzone), -1.0, 1.0)
+
+func _process_gyro_input() -> void:
+	# Gravity sensor provides filtered accelerometer data on devices that support it;
+	# fallback to raw accelerometer if gravity vector is zero or unavailable.
+	var grav_x = Input.get_gravity().x
+	var accel_x = Input.get_accelerometer().x
+	var raw_tilt = grav_x if absf(grav_x) > 0.05 else accel_x
+	
+	# Deadzone of 0.35 m/s^2, reaches full steer at 3.5 m/s^2
+	var deadzone = 0.35
+	var max_tilt = 3.5
+	if absf(raw_tilt) < deadzone:
+		GameState.mobile_steer = 0.0
+	else:
+		var effective_tilt = raw_tilt - (signf(raw_tilt) * deadzone)
+		GameState.mobile_steer = clampf(effective_tilt / (max_tilt - deadzone), -1.0, 1.0)
 
 func get_effective_gravity() -> float:
 	var diff = clampf(float(GameState.score) / 1000.0, 0.0, 1.0)
@@ -75,9 +141,18 @@ func _physics_process(delta: float) -> void:
 	if thruster:
 		thruster.visible = (velocity.y < -120.0)
 	
-	# 2. Horizontal steering via ui_left and ui_right (Inverted at 500/1000 score!)
+	# 2. Gyro mode tilt processing
+	if GameState.control_mode == GameState.ControlMode.GYRO:
+		_process_gyro_input()
+	
+	# 3. Horizontal steering via keyboard (ui_left / ui_right) or selected mobile control
+	var kb_steer = Input.get_axis("ui_left", "ui_right")
+	var active_axis = kb_steer
+	if absf(active_axis) < 0.01:
+		active_axis = GameState.mobile_steer
+		
 	var active_invert = -1.0 if GameState.are_controls_inverted else 1.0
-	var direction = Input.get_axis("ui_left", "ui_right") * active_invert * steer_multiplier
+	var direction = active_axis * active_invert * steer_multiplier
 	var base_steer = direction * get_effective_steer_speed()
 	
 	# Drunk buff mechanics: sinusoidal swaying stagger and hilarious wobble

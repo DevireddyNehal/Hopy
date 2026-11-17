@@ -35,5 +35,27 @@ func _ready() -> void:
 	assert(not get_tree().paused, "Scene tree should be unpaused")
 	print("✓ Resume verified")
 	
+	# Test HUD request_pause()
+	GameState.request_pause()
+	assert(pause_screen.visible, "PauseScreen should be visible on GameState.request_pause()")
+	assert(get_tree().paused, "Scene tree should be paused on GameState.request_pause()")
+	print("✓ HUD request_pause() verified")
+	
+	# Test Control Mode Cycling on PauseScreen
+	assert(pause_screen.control_mode_button != null, "ControlModeButton must exist on PauseScreen")
+	GameState.set_control_mode(GameState.ControlMode.BUTTONS)
+	assert(pause_screen.control_mode_button.text == "CONTROL: BUTTONS", "Button should show CONTROL: BUTTONS")
+	GameState.cycle_control_mode()
+	assert(GameState.control_mode == GameState.ControlMode.SWIPE, "Mode should cycle to SWIPE")
+	assert(pause_screen.control_mode_button.text == "CONTROL: SWIPE", "Button should show CONTROL: SWIPE")
+	GameState.cycle_control_mode()
+	assert(GameState.control_mode == GameState.ControlMode.GYRO, "Mode should cycle to GYRO")
+	assert(pause_screen.control_mode_button.text == "CONTROL: GYRO", "Button should show CONTROL: GYRO")
+	GameState.cycle_control_mode()
+	assert(GameState.control_mode == GameState.ControlMode.BUTTONS, "Mode should cycle back to BUTTONS")
+	assert(pause_screen.control_mode_button.text == "CONTROL: BUTTONS", "Button should show CONTROL: BUTTONS")
+	print("✓ Control mode cycling (BUTTONS -> SWIPE -> GYRO -> BUTTONS) verified")
+	
+	pause_screen.resume_game()
 	print("--- PAUSE SCREEN TESTS PASSED SUCCESSFULLY! ---\n")
 	get_tree().quit(0)
