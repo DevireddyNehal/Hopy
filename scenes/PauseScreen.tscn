@@ -93,6 +93,17 @@ focus_mode = 0
 theme_override_font_sizes/font_size = 18
 text = "CONTROL: BUTTONS"
 
+[node name="OpenTabButton" type="Button" parent="Panel/Margin/VBox"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(220, 36)
+layout_mode = 2
+size_flags_horizontal = 4
+focus_mode = 0
+theme_override_colors/font_color = Color(1, 0.88, 0.2, 1)
+theme_override_font_sizes/font_size = 13
+text = "📱 OPEN IN NEW TAB (GYRO)"
+
 [node name="MuteButton" type="Button" parent="Panel/Margin/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(200, 42)

@@ -4,6 +4,7 @@ extends CanvasLayer
 @onready var resume_button: Button = %ResumeButton
 @onready var restart_button: Button = %RestartButton
 @onready var control_mode_button: Button = %ControlModeButton if has_node("%ControlModeButton") else null
+@onready var open_tab_button: Button = %OpenTabButton if has_node("%OpenTabButton") else null
 @onready var mute_button: Button = %MuteButton
 
 var is_paused: bool = false
@@ -30,6 +31,11 @@ func _ready() -> void:
 	if control_mode_button:
 		control_mode_button.pressed.connect(func(): GameState.cycle_control_mode())
 		_update_control_mode_button(GameState.control_mode)
+	if open_tab_button:
+		open_tab_button.pressed.connect(func():
+			if OS.has_feature("web"):
+				JavaScriptBridge.eval("window.open(window.location.href, '_blank')", true)
+		)
 	if mute_button:
 		mute_button.pressed.connect(toggle_mute)
 		_update_mute_button()
@@ -38,6 +44,13 @@ func _update_control_mode_button(mode: int) -> void:
 	if not control_mode_button:
 		return
 	control_mode_button.text = "CONTROL: " + GameState.get_control_mode_name(mode)
+	if open_tab_button:
+		var show_tab_btn = false
+		if mode == GameState.ControlMode.GYRO and OS.has_feature("web"):
+			var is_iframe = JavaScriptBridge.eval("window.hopyIsIframe ? window.hopyIsIframe() : false", true)
+			if is_iframe == true:
+				show_tab_btn = true
+		open_tab_button.visible = show_tab_btn
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause_action"):
@@ -54,6 +67,7 @@ func pause_game() -> void:
 	visible = true
 	get_tree().paused = true
 	GameState.game_paused.emit(true)
+	_update_control_mode_button(GameState.control_mode)
 	
 	# Small scale-in animation
 	panel.pivot_offset = panel.size / 2.0

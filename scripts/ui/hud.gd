@@ -76,9 +76,9 @@ func _process(_delta: float) -> void:
 			gyro_badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			gyro_badge.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 			gyro_badge.offset_bottom = -25.0
-			gyro_badge.offset_top = -60.0
-			gyro_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			gyro_badge.modulate = Color(0.3, 0.95, 1.0, 0.8)
+			gyro_badge.offset_top = -65.0
+			gyro_badge.mouse_filter = Control.MOUSE_FILTER_PASS
+			gyro_badge.gui_input.connect(_on_gyro_badge_input)
 			var settings = LabelSettings.new()
 			settings.font_size = 14
 			settings.outline_size = 3
@@ -91,13 +91,31 @@ func _process(_delta: float) -> void:
 			var tilt_deg = GameState.last_gyro_tilt
 			var dir_str = "⟵" if tilt_deg < -2.0 else ("⟶" if tilt_deg > 2.0 else "•")
 			gyro_badge.text = "📱 TILT: %+.1f°  %s" % [tilt_deg, dir_str]
-			gyro_badge.modulate = Color(0.3, 0.95, 1.0, 0.8)
+			gyro_badge.modulate = Color(0.3, 0.95, 1.0, 0.85)
 		else:
-			gyro_badge.text = "📱 TILT PHONE (OR TOUCH/DRAG TO STEER)"
-			gyro_badge.modulate = Color(0.7, 0.85, 1.0, 0.6)
+			var is_web_iframe = false
+			if OS.has_feature("web"):
+				var ifr = JavaScriptBridge.eval("window.hopyIsIframe ? window.hopyIsIframe() : false", true)
+				is_web_iframe = ifr == true
+			if is_web_iframe:
+				gyro_badge.text = "📱 SENSORS BLOCKED BY IFRAME [TAP TO LAUNCH FULL TAB]"
+				gyro_badge.modulate = Color(1.0, 0.85, 0.2, 0.9)
+			else:
+				gyro_badge.text = "📱 TILT PHONE (OR TOUCH/DRAG TO STEER)"
+				gyro_badge.modulate = Color(0.7, 0.85, 1.0, 0.7)
 	else:
 		if gyro_badge:
 			gyro_badge.visible = false
+
+func _on_gyro_badge_input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch and event.pressed:
+		_trigger_gyro_tab_launch()
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_trigger_gyro_tab_launch()
+
+func _trigger_gyro_tab_launch() -> void:
+	if OS.has_feature("web") and not GameState.is_gyro_hardware_active:
+		JavaScriptBridge.eval("window.open(window.location.href, '_blank')", true)
 
 func _on_control_mode_changed(new_mode: int) -> void:
 	if touch_controls:

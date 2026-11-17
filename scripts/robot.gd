@@ -161,22 +161,24 @@ func _process_gyro_input(delta: float) -> void:
 	
 	# 1. Web JavaScript sensor bridge
 	if OS.has_feature("web"):
+		var is_active = JavaScriptBridge.eval("window.hopyIsSensorActive ? window.hopyIsSensorActive() : false", true)
+		if is_active != null and is_active:
+			sensor_active = true
 		var val = JavaScriptBridge.eval("window.hopyGetTilt ? window.hopyGetTilt() : (window.hopyGyro ? window.hopyGyro.tilt : 0.0)", true)
 		if val != null and (val is float or val is int):
-			var f_val = float(val)
-			if absf(f_val) > 0.01:
-				raw_tilt = f_val
+			raw_tilt = float(val)
+			if absf(raw_tilt) > 0.05:
 				sensor_active = true
+	else:
+		sensor_active = true
 	
 	# 2. Native hardware sensor fallback (Android APK & web fallback)
-	if not sensor_active:
-		var grav = Input.get_gravity()
-		var accel = Input.get_accelerometer()
-		var sensor_x = grav.x if absf(grav.x) > 0.05 else accel.x
-		if absf(sensor_x) > 0.05:
-			# ~6 degrees per m/s^2 on phone in portrait
-			raw_tilt = sensor_x * 6.0
-			sensor_active = true
+	var grav = Input.get_gravity()
+	var accel = Input.get_accelerometer()
+	var sensor_x = grav.x if absf(grav.x) > 0.05 else accel.x
+	if absf(sensor_x) > 0.05 and (not OS.has_feature("web") or not sensor_active or absf(raw_tilt) < 0.1):
+		raw_tilt = sensor_x * 6.0
+		sensor_active = true
 
 	# 3. Calculate steering target from physical tilt
 	var tilt_steer = 0.0

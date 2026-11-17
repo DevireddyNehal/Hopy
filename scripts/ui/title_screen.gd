@@ -5,6 +5,7 @@ extends Control
 @onready var start_prompt: Label = %StartPrompt
 @onready var play_button: Button = %PlayButton
 @onready var control_mode_button: Button = %ControlModeButton if has_node("%ControlModeButton") else null
+@onready var open_tab_button: Button = %OpenTabButton if has_node("%OpenTabButton") else null
 @onready var controls_info: Label = %ControlsInfo if has_node("%ControlsInfo") else null
 
 var is_starting: bool = false
@@ -17,6 +18,11 @@ func _ready() -> void:
 	
 	if control_mode_button:
 		control_mode_button.pressed.connect(func(): GameState.cycle_control_mode())
+	if open_tab_button:
+		open_tab_button.pressed.connect(func():
+			if OS.has_feature("web"):
+				JavaScriptBridge.eval("window.open(window.location.href, '_blank')", true)
+		)
 	if best_label:
 		if GameState.best_score > 0:
 			best_label.text = "BEST RECORD: " + str(GameState.best_score)
@@ -66,3 +72,10 @@ func _update_control_mode_display(mode: int) -> void:
 		control_mode_button.text = "MOBILE MODE: " + mode_name
 	if controls_info:
 		controls_info.text = "PC: [A][D]/[ARROWS] | MOBILE: " + mode_name
+	if open_tab_button:
+		var show_tab_btn = false
+		if mode == GameState.ControlMode.GYRO and OS.has_feature("web"):
+			var is_iframe = JavaScriptBridge.eval("window.hopyIsIframe ? window.hopyIsIframe() : false", true)
+			if is_iframe == true:
+				show_tab_btn = true
+		open_tab_button.visible = show_tab_btn
